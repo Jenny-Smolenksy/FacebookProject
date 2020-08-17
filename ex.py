@@ -39,7 +39,7 @@ def normLikesToRange(dataset):
 def main():
     #for data - 16 is like
     filename = 'data\dataset_Facebook.csv'
-    data = np.loadtxt(filename, dtype=str, delimiter=";")
+    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,16))
 
     #delete first row - name
     data = np.delete(data, (0), axis=0)

@@ -7,6 +7,7 @@ from torch.autograd import Variable
 from matplotlib import pyplot as plt
 import ntpath
 import numpy as np
+from scipy import stats
 
 from FBPostData import FBPostData
 
@@ -34,6 +35,7 @@ def train(model, train_loader, optimizer):
 
         output = model(inputs)  # get prediction
        # targets = targets.squeeze_()
+        targets = Variable(targets)
 
         loss = loss_function(output, targets)  # calculate loss
         loss.backward()  # back propagation
@@ -78,7 +80,7 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
 
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(7, 128)
+        self.linear1 = nn.Linear(18, 128)
         self.batch_norm1 = nn.BatchNorm1d(128)
         self.linear2 = nn.Linear(128, 64)
         self.batch_norm2 = nn.BatchNorm1d(64)
@@ -97,9 +99,6 @@ class NeuralNet(nn.Module):
         x = self.relu(self.linear3(x))
 
         return x
-
-
-
 
 
 def valuation(data_loader, model):
@@ -168,6 +167,21 @@ def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy):
     plt.show()
     plt.savefig('accuracy.png')
 
+def normalization_data_divide_by_max(data):
+    data_norm = data / (data.max(axis=0) + np.spacing(0))
+    return data_norm
+
+def norm_min_max(data):
+    data_norm  = (data - data.min()) / (data.max() - data.min())
+    return data_norm
+
+def norm_standart(data):
+    data_norm = (data - data.mean()) / data.std()
+    return data_norm
+
+def norm_zcore(data):
+    stats.zscore(data)
+
 
 def main():
     """
@@ -177,17 +191,26 @@ def main():
 
 
     train_file = "data/train.csv"
-    data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0,7))
-    data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=7)
+    data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0,18))
+    data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=18)
 
-   # data_x = data_x.astype('float32')
-  #  data_y = data_y.astype(int)
-#    data_y = data_y.reshape((len(data_y), 1))
+    test_file = "data/test.csv"
+    test_x = np.loadtxt(test_file, skiprows=1, delimiter=';', usecols=range(0, 18))
+    test_y = np.loadtxt(test_file, skiprows=1, delimiter=';', usecols=18)
 
+#    data_x = norm_min_max(data_x)
+#    test_x = norm_min_max(test_x)
+
+    data_x = normalization_data_divide_by_max(data_x)
+    test_x = normalization_data_divide_by_max(test_x)
 
     data_set_train = FBPostData(data_x, data_y)
+    data_set_test = FBPostData(test_x, test_y)
+
 
     train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=32, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(data_set_test, batch_size=32, shuffle=False)
+
 
 
     model = NeuralNet()
@@ -195,8 +218,8 @@ def main():
     if torch.cuda.is_available():
         model.cuda()
     optimizer = optim.Adam(model.parameters(), lr=0.0005)
-    num_of_epochs = 5
-    train_acc, validation_acc = run_epochs(num_of_epochs, model, train_loader, optimizer, validation_loader=train_loader)
+    num_of_epochs = 100
+    train_acc, validation_acc = run_epochs(num_of_epochs, model, train_loader, optimizer, validation_loader=test_loader)
     model.eval()
     print('hello')
 

@@ -25,12 +25,17 @@ def type_to_number(dataset):
 
 #get data set and change every range to number between 1-6
 def likes_to_range(dataset):
-    dataset[:, 7][dataset[:, 7] < 50] = 0
-    dataset[:, 7][(dataset[:, 7] >= 50) & (dataset[:, 7] < 100)] = 1
-    dataset[:, 7][(dataset[:, 7] >= 100) & (dataset[:, 7] < 200)] = 2
-    dataset[:, 7][(dataset[:, 7] >= 200) & (dataset[:, 7] < 500)] = 3
-    dataset[:, 7][dataset[:, 7] >= 500] = 4
+  #  dataset[:, 7][dataset[:, 7] < 50] = 0
+  #  dataset[:, 7][(dataset[:, 7] >= 50) & (dataset[:, 7] < 100)] = 1
+  #  dataset[:, 7][(dataset[:, 7] >= 100) & (dataset[:, 7] < 200)] = 2
+  #  dataset[:, 7][(dataset[:, 7] >= 200) & (dataset[:, 7] < 500)] = 3
+  #  dataset[:, 7][dataset[:, 7] >= 500] = 4
 
+  dataset[:, 18][dataset[:, 18] < 50] = 0
+  dataset[:, 18][(dataset[:, 18] >= 50) & (dataset[:, 18] < 100)] = 1
+  dataset[:, 18][(dataset[:, 18] >= 100) & (dataset[:, 18] < 200)] = 2
+  dataset[:, 18][(dataset[:, 18] >= 200) & (dataset[:, 18] < 500)] = 3
+  dataset[:, 18][dataset[:, 18] >= 500] = 4
 
 def delete_columns(data):
     np.delete(data, 16, axis=1)
@@ -81,7 +86,7 @@ def main():
     filename = 'data\dataset_Facebook.csv'
 
     #load text and ignore some coulmns
-    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,16))
+    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,16))
 
     data_after_preprocess = pre_process_data(data)
 

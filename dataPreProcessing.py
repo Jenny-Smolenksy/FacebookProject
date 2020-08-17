@@ -62,7 +62,7 @@ def main():
 
     pre_process_data(data)
 
-    np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
+    np.savetxt('data\processedDataAll.csv', data, fmt='%s', delimiter=';')
 
     train_test_separate(data)
 

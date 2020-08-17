@@ -1,5 +1,6 @@
 import torch.utils.data as data
 
+
 class FBPostData(data.Dataset):
 
     def __init__(self, specs, labels):
@@ -11,7 +12,7 @@ class FBPostData(data.Dataset):
         Args:
             index (int): Index
         Returns:
-            tuple: (spect, target) where target is class_index of the target class.
+            tuple: (specs, target) where target is class_index of the target class.
         """
         sample = self.specs[index]
         target = self.classes[index]

@@ -1,3 +1,4 @@
+import pandas
 import torch.cuda
 import torch.utils.data
 import torch.cuda
@@ -74,12 +75,11 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
 
         self.relu = nn.ReLU()
-        self.max_pool = nn.MaxPool2d(kernel_size=2)
-        self.linear1 = nn.Linear(78848, 512)
-        self.batch_norm1 = nn.BatchNorm1d(512)
-        self.linear2 = nn.Linear(512, 128)
-        self.batch_norm2 = nn.BatchNorm1d(128)
-        self.linear3 = nn.Linear(128, 32)
+        self.linear1 = nn.Linear(7, 128)
+        self.batch_norm1 = nn.BatchNorm1d(128)
+        self.linear2 = nn.Linear(128, 64)
+        self.batch_norm2 = nn.BatchNorm1d(64)
+        self.linear3 = nn.Linear(64, 5)
 
 
     def forward(self, x):
@@ -87,18 +87,12 @@ class NeuralNet(nn.Module):
         if torch.cuda.is_available():  # use cuda if possible
             x = x.cuda()
 
-        x = self.relu(self.conv1(x))  # convolution with kernel 3, then relu
-        x = self.max_pool(x)  # max pooling kernel 2
-        x = self.relu(self.conv2(x))  # convolution with kernel 3, then relu
-        x = self.max_pool(x)  # max pooling kernel 2
-        x = self.relu(self.conv3(x))  # convolution with kernel 3, then relu
-        x = self.max_pool(x)  # max pooling kernel 2
-        x = x.view(x.size(0), -1)  # flatten
-        x = self.relu(self.linear1(x))  # linear, then relu
-        x = self.batch_norm1(x)  # batch normalization
-        x = self.relu(self.linear2(x))  # linear, then relu
-        x = self.batch_norm2(x)  # batch normalization
-        x = self.relu(self.linear3(x))  # linear, then relu
+        x = self.relu(self.linear1(x))
+        x = self.batch_norm1(x)
+        x = self.relu(self.linear2(x))
+        x = self.batch_norm2(x)
+        x = self.relu(self.linear3(x))
+
         return x
 
 
@@ -175,44 +169,26 @@ def main():
     :return: 0 if successfully ended
     """
 
-    # load data using gcommand loader
 
-    data = np.genfromtxt('train.csv', names=False)
 
-    data_set_train = FBPostData(data, None)
-   # data_set_valid = GCommandLoader('./gcommands/valid')
-   # data_set_test = GCommandLoader('./gcommands/test')
+    data_x = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=range(1,7))
+    data_y = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=7)
+
+    data_set_train =FBPostData(data_x, data_y)
+
     train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=50, shuffle=True,
-                                               num_workers=4, pin_memory=True, sampler=None)
+                                              num_workers=4, pin_memory=True, sampler=None)
 
-    # create model
-    model = CnnAudioNet()
+    model = NeuralNet()
+
     if torch.cuda.is_available():
-        # run it using cuda
         model.cuda()
+    optimizer = optim.Adam(model.parameters(), lr=0.0005)
+    num_of_epochs = 5
+    train_acc, validation_acc = run_epochs(num_of_epochs, model, train_loader, optimizer, validation_loader=train_loader)
+    model.eval()
+    print('hello')
 
-    batch_size = 100
-    num_workers = 4
-    # load data
-    #train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=batch_size, shuffle=True,
-    #                                           num_workers=num_workers, pin_memory=True, sampler=None)
-
-    # validation_loader = torch.utils.data.DataLoader(data_set_valid, batch_size=batch_size, shuffle=True,
-    #                                                 num_workers=num_workers, pin_memory=True, sampler=None)
-    #
-    # test_loader = torch.utils.data.DataLoader(data_set_test, batch_size=batch_size, shuffle=False,
-    #                                           num_workers=num_workers, pin_memory=True, sampler=None)
-
-    # num_of_epochs = 5
-    # optimizer = optim.Adam(model.parameters(), lr=0.0005)
-    # train_acc, validation_acc = run_epochs(num_of_epochs, model, train_loader, optimizer, validation_loader)
-    #
-    # model.eval()
-    # file = open('test_y', 'w')  # create file
-    # predict_test(data_set_train.classes, test_loader, model, file)  # get test predictions
-    # file.close()  # close file
-    #
-    # draw_graph_accuracy(num_of_epochs, train_acc, validation_acc)  # create graph
 
 
 if __name__ == '__main__':

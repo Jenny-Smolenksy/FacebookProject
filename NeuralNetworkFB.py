@@ -22,18 +22,21 @@ def train(model, train_loader, optimizer):
     loss_function = nn.CrossEntropyLoss()  # set loss function
 
     # go over batches
-    for specs, classes in train_loader:
-
+    #for specs, classes in train_loader:
+    for i, (inputs, targets) in enumerate(train_loader):
        # data = Variable(data)
       #  labels = Variable(labels)
-        if torch.cuda.is_available():
-            specs = specs.cuda()
-            classes = classes.cuda()
+      #   if torch.cuda.is_available():
+      #       specs = specs.cuda()
+      #       classes = classes.cuda()
 
         optimizer.zero_grad()
 
-        output = model(specs)  # get prediction
-        loss = loss_function(output, classes)  # calculate loss
+        output = model(inputs)  # get prediction
+
+
+
+        loss = loss_function(output, targets)  # calculate loss
         loss.backward()  # back propagation
         optimizer.step()  # optimizer step
 
@@ -178,13 +181,13 @@ def main():
     data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0,7))
     data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=7)
 
-    data_x = data_x.astype(float)
-    data_y = data_y.astype(float)
+    data_x = data_x.astype('float32')
+    data_y = data_y.astype('float32')
+    data_y = data_y.reshape((len(data_y), 1))
+
     data_set_train = FBPostData(data_x, data_y)
 
-    train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=50, shuffle=True,
-                                              num_workers=4, pin_memory=True, sampler=None)
-
+    train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=32, shuffle=True)
 
 
     model = NeuralNet()

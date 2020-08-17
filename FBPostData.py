@@ -17,7 +17,7 @@ class FBPostData(data.Dataset):
         sample = self.specs[index]
         target = self.classes[index]
 
-        return sample, target
+        return [sample, target]
 
     def __len__(self):
         return len(self.specs)

@@ -65,6 +65,7 @@ def train_test_separate(data):
     data_train = data[0:train_size]
     data_test = data[train_size:num_of_rows]
 
+
     # take the likes as targets
     train_y = data_train[:, 7]
     test_y = data_test[:, 7]
@@ -73,7 +74,7 @@ def train_test_separate(data):
     train_x = np.delete(data_train, 7, axis=1)
     test_x = np.delete(data_test, 7, axis=1)
 
-    return train_x, train_y, test_x, test_y
+    return train_x, train_y, test_x, test_y,data_train,data_test
 
 def main():
     #for data - 16 is like
@@ -87,7 +88,10 @@ def main():
     #np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
     np.savetxt('processedDataAll.csv', data_after_preprocess, fmt='%s', delimiter=';')
 
-    train_x, train_y, test_x, test_y = train_test_separate(data_after_preprocess)
+    train_x, train_y, test_x, test_y, data_train,data_test = train_test_separate(data_after_preprocess)
+
+    np.savetxt('train.csv', data_train, fmt='%s', delimiter=';')
+    np.savetxt('test.csv', data_test, fmt='%s', delimiter=';')
 
     np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
     np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')

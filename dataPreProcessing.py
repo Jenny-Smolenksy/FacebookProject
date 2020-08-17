@@ -85,7 +85,7 @@ def main():
     data_after_preprocess = pre_process_data(data)
 
     #np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
-    np.savetxt('processedDataAll_changed.csv', data_after_preprocess, fmt='%s', delimiter=';')
+    np.savetxt('processedDataAll.csv', data_after_preprocess, fmt='%s', delimiter=';')
 
     train_x, train_y, test_x, test_y = train_test_separate(data_after_preprocess)
 

@@ -1,10 +1,15 @@
 import torch.utils.data as data
-
+import torch
+import numpy as np
 
 class FBPostData(data.Dataset):
 
     def __init__(self, specs, labels):
+        specs = torch.FloatTensor(specs)
         self.specs = specs
+
+        labels = torch.LongTensor(labels)
+  #      labels = labels.astype(int)
         self.classes = labels
 
     def __getitem__(self, index):

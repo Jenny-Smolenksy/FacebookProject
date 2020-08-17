@@ -25,11 +25,11 @@ def type_to_number(dataset):
 
 #get data set and change every range to number between 1-6
 def likes_to_range(dataset):
-    dataset[:, 7][dataset[:, 7] < 50] = 1
-    dataset[:, 7][(dataset[:, 7] >= 50) & (dataset[:, 7] < 100)] = 2
-    dataset[:, 7][(dataset[:, 7] >= 100) & (dataset[:, 7] < 200)] = 3
-    dataset[:, 7][(dataset[:, 7] >= 200) & (dataset[:, 7] < 500)] = 4
-    dataset[:, 7][dataset[:, 7] >= 500] = 5
+    dataset[:, 7][dataset[:, 7] < 50] = 0
+    dataset[:, 7][(dataset[:, 7] >= 50) & (dataset[:, 7] < 100)] = 1
+    dataset[:, 7][(dataset[:, 7] >= 100) & (dataset[:, 7] < 200)] = 2
+    dataset[:, 7][(dataset[:, 7] >= 200) & (dataset[:, 7] < 500)] = 3
+    dataset[:, 7][dataset[:, 7] >= 500] = 4
 
 
 def delete_columns(data):

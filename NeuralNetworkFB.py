@@ -33,8 +33,7 @@ def train(model, train_loader, optimizer):
         optimizer.zero_grad()
 
         output = model(inputs)  # get prediction
-
-
+       # targets = targets.squeeze_()
 
         loss = loss_function(output, targets)  # calculate loss
         loss.backward()  # back propagation
@@ -181,9 +180,10 @@ def main():
     data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0,7))
     data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=7)
 
-    data_x = data_x.astype('float32')
-    data_y = data_y.astype('float32')
-    data_y = data_y.reshape((len(data_y), 1))
+   # data_x = data_x.astype('float32')
+  #  data_y = data_y.astype(int)
+#    data_y = data_y.reshape((len(data_y), 1))
+
 
     data_set_train = FBPostData(data_x, data_y)
 

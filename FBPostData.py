@@ -13,7 +13,7 @@ class FBPostData(data.Dataset):
         Returns:
             tuple: (spect, target) where target is class_index of the target class.
         """
-        sample = self.spects[index]
+        sample = self.specs[index]
         target = self.classes[index]
 
         return sample, target

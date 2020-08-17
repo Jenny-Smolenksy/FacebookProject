@@ -75,7 +75,6 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
 
         self.relu = nn.ReLU()
-        self.max_pool = nn.MaxPool2d(kernel_size=2)
         self.linear1 = nn.Linear(7, 128)
         self.batch_norm1 = nn.BatchNorm1d(128)
         self.linear2 = nn.Linear(128, 64)
@@ -92,7 +91,7 @@ class NeuralNet(nn.Module):
         x = self.batch_norm1(x)
         x = self.relu(self.linear2(x))
         x = self.batch_norm2(x)
-        x = self.relu(self.linear3)
+        x = self.relu(self.linear3(x))
 
         return x
 
@@ -170,7 +169,7 @@ def main():
     :return: 0 if successfully ended
     """
 
-    # load data using gcommand loader
+
 
     data_x = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=range(1,7))
     data_y = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=7)
@@ -178,7 +177,7 @@ def main():
     data_set_train =FBPostData(data_x, data_y)
 
     train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=50, shuffle=True,
-                                              num_workers=5, pin_memory=True, sampler=None)
+                                              num_workers=4, pin_memory=True, sampler=None)
 
     model = NeuralNet()
 
@@ -189,7 +188,7 @@ def main():
     train_acc, validation_acc = run_epochs(num_of_epochs, model, train_loader, optimizer, validation_loader=train_loader)
     model.eval()
     print('hello')
-    
+
 
 
 if __name__ == '__main__':

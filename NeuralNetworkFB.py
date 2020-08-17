@@ -22,19 +22,20 @@ def train(model, train_loader, optimizer):
     loss_function = nn.CrossEntropyLoss()  # set loss function
 
     # go over batches
-    for data, labels in train_loader:
+    for specs, classes in train_loader:
 
-        data = Variable(data)
-        labels = Variable(labels)
+       # data = Variable(data)
+      #  labels = Variable(labels)
         if torch.cuda.is_available():
-            data = data.cuda()
-            labels = labels.cuda()
+            specs = specs.cuda()
+            classes = classes.cuda()
+
         optimizer.zero_grad()
-        output = model(data)  # get prediction
-        loss = loss_function(output, labels)  # calculate loss
+
+        output = model(specs)  # get prediction
+        loss = loss_function(output, classes)  # calculate loss
         loss.backward()  # back propagation
         optimizer.step()  # optimizer step
-
 
 def run_epochs(epochs_num, model, train_loader, optimizer, validation_loader):
     """
@@ -56,6 +57,7 @@ def run_epochs(epochs_num, model, train_loader, optimizer, validation_loader):
         train(model, train_loader, optimizer)  # train
 
         model.eval()  # move to valuation mode
+
         accuracy = valuation(train_loader, model)  # valuate
         train_acc.append(accuracy)
         print(f"train set accuracy: {accuracy}")
@@ -64,7 +66,6 @@ def run_epochs(epochs_num, model, train_loader, optimizer, validation_loader):
         valid_acc.append(accuracy)
 
     return train_acc, valid_acc
-
 
 class NeuralNet(nn.Module):
     """
@@ -94,6 +95,9 @@ class NeuralNet(nn.Module):
         x = self.relu(self.linear3(x))
 
         return x
+
+
+
 
 
 def valuation(data_loader, model):
@@ -170,14 +174,18 @@ def main():
     """
 
 
+    train_file = "data/train.csv"
+    data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0,7))
+    data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=7)
 
-    data_x = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=range(1,7))
-    data_y = np.loadtxt("data\d1.csv", skiprows=1, delimiter=',', usecols=7)
-
-    data_set_train =FBPostData(data_x, data_y)
+    data_x = data_x.astype(float)
+    data_y = data_y.astype(float)
+    data_set_train = FBPostData(data_x, data_y)
 
     train_loader = torch.utils.data.DataLoader(data_set_train, batch_size=50, shuffle=True,
                                               num_workers=4, pin_memory=True, sampler=None)
+
+
 
     model = NeuralNet()
 

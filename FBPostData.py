@@ -5,11 +5,10 @@ import numpy as np
 class FBPostData(data.Dataset):
 
     def __init__(self, specs, labels):
-        specs = torch.FloatTensor(specs)
+        specs = specs.astype('float32')
         self.specs = specs
 
         labels = torch.LongTensor(labels)
-  #      labels = labels.astype(int)
         self.classes = labels
 
     def __getitem__(self, index):
@@ -22,7 +21,7 @@ class FBPostData(data.Dataset):
         sample = self.specs[index]
         target = self.classes[index]
 
-        return sample, target
+        return [sample, target]
 
     def __len__(self):
         return len(self.specs)

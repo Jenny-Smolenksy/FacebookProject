@@ -118,10 +118,11 @@ def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01):
             torch.utils.data.DataLoader(validation_data, batch_size=32, shuffle=True)
 
         model = torch.load("model")  # to start training from beginning
-        train_acc, valid_acc = \
+        train_acc, valid_acc, epochs = \
             run_epochs(model, train_loader, validation_loader, num_of_epochs, learning_rate)
         train_acc_cross.append(max(train_acc))
         valid_acc_cross.append(max(valid_acc))
+        draw_graph_accuracy(epochs, train_acc, valid_acc)
 
     print(f"max train accuracy: {max(train_acc_cross)},"
           f" max validation accuracy: {max(valid_acc_cross)}")
@@ -155,7 +156,7 @@ def run_epochs(model, train_loader, validation_loader, num_of_epochs=100, learni
             if counter_for_over_fitting > 5:
                 break
 
-    return train_acc, valid_acc  # if want to print
+    return train_acc, valid_acc, epoch+1  # if want to print
 
 
 # def predict_test(classes, test_loader, model, file):
@@ -181,23 +182,23 @@ def run_epochs(model, train_loader, validation_loader, num_of_epochs=100, learni
 #             if file:
 #                 file.write(f"{file_name}, {label}\n")  # write to file
 #             file_index += 1
-# def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy):
-#     """
-#     this function creates graph of train and validation accuracy per epoch
-#     :param num_of_epochs:
-#     :param train_accuracy:
-#     :param validation_accuracy:
-#     :return: none
-#     """
-#     x = list(range(1, num_of_epochs + 1))
-#     plt.plot(x, validation_accuracy, label="validation", color='blue', linewidth=2)
-#     plt.plot(x, train_accuracy, label="train", color='green', linewidth=2)
-#     plt.title('Accuracy per epoch', fontweight='bold', fontsize=13)
-#     plt.xlabel('number of epoch')
-#     plt.ylabel('accuracy')
-#     plt.legend()
-#     plt.show()
-#     plt.savefig('accuracy.png')
+def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy):
+    """
+    this function creates graph of train and validation accuracy per epoch
+    :param num_of_epochs:
+    :param train_accuracy:
+    :param validation_accuracy:
+    :return: none
+    """
+    x = list(range(1, num_of_epochs + 1))
+    plt.plot(x, validation_accuracy, label="validation", color='blue', linewidth=2)
+    plt.plot(x, train_accuracy, label="train", color='green', linewidth=2)
+    plt.title('Accuracy per epoch', fontweight='bold', fontsize=13)
+    plt.xlabel('number of epoch')
+    plt.ylabel('accuracy')
+    plt.legend()
+    plt.show()
+    #plt.savefig('accuracy.png')
 
 
 def main():

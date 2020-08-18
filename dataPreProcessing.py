@@ -38,6 +38,8 @@ def delete_columns(data):
 
 
 def pre_process_data(data):
+
+    title_row = data[0]
     data = delete_empty_rows(data)
 
     # norm the type
@@ -48,6 +50,7 @@ def pre_process_data(data):
     # norm likes range
     likes_to_range(data)
 
+    data = np.vstack ((title_row, data) )
     return data
 
 def normalization_data_divide_by_max(data):
@@ -100,17 +103,17 @@ def main():
     data_after_preprocess = pre_process_data(data)
 
     #np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
-    np.savetxt('processedDataAll.csv', data_after_preprocess, fmt='%s', delimiter=';')
+    np.savetxt('data\processedDataAll.csv', data_after_preprocess, fmt='%s', delimiter=';')
 
     train_x, train_y, test_x, test_y, data_train,data_test = train_test_separate(data_after_preprocess)
 
-    np.savetxt('train.csv', data_train, fmt='%s', delimiter=';')
-    np.savetxt('test.csv', data_test, fmt='%s', delimiter=';')
+    np.savetxt('data/train.csv', data_train, fmt='%s', delimiter=';')
+    np.savetxt('data/test.csv', data_test, fmt='%s', delimiter=';')
 
-    np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
-    np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')
-    np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
-    np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
+    #np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
+    #np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')
+    #np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
+    #np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
 
     #sava train and test
 

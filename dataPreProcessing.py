@@ -38,6 +38,8 @@ def delete_columns(data):
 
 
 def pre_process_data(data):
+
+    title_row = data[0]
     data = delete_empty_rows(data)
 
     # norm the type
@@ -48,7 +50,7 @@ def pre_process_data(data):
     # norm likes range
     likes_to_range(data)
 
-    return data
+    return data, title_row
 
 def normalization_data_divide_by_max(data):
     data_norm = data / (data.max(axis=0) + np.spacing(0))
@@ -97,20 +99,23 @@ def main():
     #load text and ignore some coulmns
     data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,12,13,15,16))
 
-    data_after_preprocess = pre_process_data(data)
+    data_after_precess, title_row = pre_process_data(data)
 
+    data_with_title = np.vstack((title_row, data_after_precess))
     #np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
-    np.savetxt('processedDataAll.csv', data_after_preprocess, fmt='%s', delimiter=';')
+    np.savetxt('data\processedDataAll.csv', data_with_title, fmt='%s', delimiter=';')
 
-    train_x, train_y, test_x, test_y, data_train,data_test = train_test_separate(data_after_preprocess)
+    train_x, train_y, test_x, test_y, data_train,data_test = train_test_separate(data_after_precess)
 
-    np.savetxt('train.csv', data_train, fmt='%s', delimiter=';')
-    np.savetxt('test.csv', data_test, fmt='%s', delimiter=';')
+    train_with_title = np.vstack((title_row, data_train))
+    np.savetxt('data/train.csv', train_with_title, fmt='%s', delimiter=';')
+    test_with_title = np.vstack((title_row, data_test))
+    np.savetxt('data/test.csv', test_with_title, fmt='%s', delimiter=';')
 
-    np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
-    np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')
-    np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
-    np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
+    #np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
+    #np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')
+    #np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
+    #np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
 
     #sava train and test
 

@@ -19,14 +19,14 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
 
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(18, 128)
+        self.batch_norm = nn.BatchNorm1d(12)
+        self.linear1 = nn.Linear(12, 128)
         self.batch_norm1 = nn.BatchNorm1d(128)
         self.linear2 = nn.Linear(128, 64)
         self.batch_norm2 = nn.BatchNorm1d(64)
         self.linear3 = nn.Linear(64, 32)
         self.batch_norm3 = nn.BatchNorm1d(32)
         self.linear4 = nn.Linear(32, 5)
-        self.batch_norm = nn.BatchNorm1d(18)
         self.linear5 = nn.Linear(5, 5)
 
     def forward(self, x):
@@ -208,8 +208,8 @@ def main():
     """
 
     train_file = "data/train.csv"
-    data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0, 18))
-    data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=18)
+    data_x = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=range(0, 12))
+    data_y = np.loadtxt(train_file, skiprows=1, delimiter=';', usecols=12)
     data_set = FBPostData(data_x, data_y)
 
     model = NeuralNet()

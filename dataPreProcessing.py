@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import stats
 
 
 def delete_empty_rows(data):
@@ -25,20 +26,14 @@ def type_to_number(dataset):
 
 #get data set and change every range to number between 1-6
 def likes_to_range(dataset):
-  #  dataset[:, 7][dataset[:, 7] < 50] = 0
-  #  dataset[:, 7][(dataset[:, 7] >= 50) & (dataset[:, 7] < 100)] = 1
-  #  dataset[:, 7][(dataset[:, 7] >= 100) & (dataset[:, 7] < 200)] = 2
-  #  dataset[:, 7][(dataset[:, 7] >= 200) & (dataset[:, 7] < 500)] = 3
-  #  dataset[:, 7][dataset[:, 7] >= 500] = 4
-
-  dataset[:, 18][dataset[:, 18] < 50] = 0
-  dataset[:, 18][(dataset[:, 18] >= 50) & (dataset[:, 18] < 100)] = 1
-  dataset[:, 18][(dataset[:, 18] >= 100) & (dataset[:, 18] < 200)] = 2
-  dataset[:, 18][(dataset[:, 18] >= 200) & (dataset[:, 18] < 500)] = 3
-  dataset[:, 18][dataset[:, 18] >= 500] = 4
+    dataset[:, 12][dataset[:, 12] < 50] = 0
+    dataset[:, 12][(dataset[:, 12] >= 50) & (dataset[:, 12] < 100)] = 1
+    dataset[:, 12][(dataset[:, 12] >= 100) & (dataset[:, 12] < 200)] = 2
+    dataset[:, 12][(dataset[:, 12] >= 200) & (dataset[:, 12] < 500)] = 3
+    dataset[:, 12][dataset[:, 12] >= 500] = 4
 
 def delete_columns(data):
-    np.delete(data, 16, axis=1)
+    np.delete(data, 12, axis=1)
     # add all the rest
 
 
@@ -55,11 +50,25 @@ def pre_process_data(data):
 
     return data
 
+def normalization_data_divide_by_max(data):
+    data_norm = data / (data.max(axis=0) + np.spacing(0))
+    return data_norm
+
+def norm_min_max(data):
+    data_norm  = (data - data.min()) / (data.max() - data.min())
+    return data_norm
+
+def norm_standart(data):
+    data_norm = (data - data.mean()) / data.std()
+    return data_norm
+
+def norm_zcore(data):
+    stats.zscore(data)
 
 def train_test_separate(data):
 
     # shuffle randim lines
-    # np.random.shuffle(data)
+    np.random.shuffle(data)
 
     num_of_rows = data[:, 0].size
 
@@ -72,12 +81,12 @@ def train_test_separate(data):
 
 
     # take the likes as targets
-    train_y = data_train[:, 7]
-    test_y = data_test[:, 7]
+    train_y = data_train[:, 12]
+    test_y = data_test[:, 12]
 
     # delete it from features
-    train_x = np.delete(data_train, 7, axis=1)
-    test_x = np.delete(data_test, 7, axis=1)
+    train_x = np.delete(data_train, 12 , axis=1)
+    test_x = np.delete(data_test, 12, axis=1)
 
     return train_x, train_y, test_x, test_y,data_train,data_test
 
@@ -86,7 +95,7 @@ def main():
     filename = 'data\dataset_Facebook.csv'
 
     #load text and ignore some coulmns
-    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,16))
+    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,12,13,15,16))
 
     data_after_preprocess = pre_process_data(data)
 
@@ -103,11 +112,7 @@ def main():
     np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
     np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
 
-
-
     #sava train and test
-
-
 
 
 if __name__ == '__main__':

@@ -1,13 +1,13 @@
-import pandas
+
 import torch.cuda
 import torch.utils.data
 import torch.cuda
 from torch import nn, optim
 from torch.autograd import Variable
 from matplotlib import pyplot as plt
-import ntpath
 import numpy as np
 from FBPostData import FBPostData
+
 
 
 class NeuralNet(nn.Module):
@@ -20,33 +20,32 @@ class NeuralNet(nn.Module):
 
         self.relu = nn.ReLU()
         self.batch_norm = nn.BatchNorm1d(12)
-        self.linear1 = nn.Linear(12, 128)
-        self.batch_norm1 = nn.BatchNorm1d(128)
-        self.linear2 = nn.Linear(128, 64)
-        self.batch_norm2 = nn.BatchNorm1d(64)
-        self.linear3 = nn.Linear(64, 32)
-        self.batch_norm3 = nn.BatchNorm1d(32)
+        self.linear1 = nn.Linear(12, 64)
+        self.linear2 = nn.Linear(64, 128)
+        self.batch_norm128 = nn.BatchNorm1d(128)
+        self.linear3 = nn.Linear(128, 32)
+        self.batch_norm32 = nn.BatchNorm1d(32)
         self.linear4 = nn.Linear(32, 5)
-        self.linear5 = nn.Linear(5, 5)
 
     def forward(self, x):
+
         x = Variable(x)
         if torch.cuda.is_available():  # use cuda if possible
             x = x.cuda()
 
         x = self.batch_norm(x)
         x = self.relu(self.linear1(x))
-        x = self.batch_norm1(x)
         x = self.relu(self.linear2(x))
-        x = self.batch_norm2(x)
+        x = self.batch_norm128(x)
         x = self.relu(self.linear3(x))
-        x = self.batch_norm3(x)
+        x = self.batch_norm32(x)
         x = self.relu(self.linear4(x))
 
         return x
 
 
-def train(model, train_loader, learning_rate=0.001):
+
+def train(model, train_loader, learning_rate=0.001, l2_regular=False, l1_regular=False, reg_labmda=0.01):
     """
     this function train the model
     :param model: to train
@@ -56,6 +55,8 @@ def train(model, train_loader, learning_rate=0.001):
     """
     loss_function = nn.CrossEntropyLoss()  # set loss function
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    if l2_regular:
+        optimizer.weight_decay = reg_labmda
 
     # go over batches
     # for specs, classes in train_loader:
@@ -70,6 +71,13 @@ def train(model, train_loader, learning_rate=0.001):
         optimizer.zero_grad()
         output = model(inputs)  # get prediction
         loss = loss_function(output, targets)  # calculate loss
+        if l1_regular:
+            reg = 0
+            for params in model.parameters():
+                reg += abs(0.5*(params**2)).sum()
+                loss += reg_labmda * reg
+
+
         loss.backward()  # back propagation
         optimizer.step()  # optimizer step
 
@@ -98,7 +106,8 @@ def evaluate(data_loader, model):
     return round(accuracy.item(), 3)
 
 
-def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01):
+def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01,
+                     l2_regular=False, l1_regular=False, reg_labmda=0.01):
     torch.save(model, "model")
     train_acc_cross, valid_acc_cross = [], []
 
@@ -108,7 +117,6 @@ def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01):
     tags = data.classes
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
     for train_index, valid_index in skf.split(samples, tags):
-        print('k-cross validation')
         train_data = FBPostData(samples[train_index], tags[train_index])
         train_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
@@ -119,42 +127,47 @@ def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01):
 
         model = torch.load("model")  # to start training from beginning
         train_acc, valid_acc, epochs = \
-            run_epochs(model, train_loader, validation_loader, num_of_epochs, learning_rate)
+            run_epochs(model, train_loader, validation_loader, num_of_epochs,
+                       learning_rate, l2_regular, l1_regular, reg_labmda)
         train_acc_cross.append(max(train_acc))
         valid_acc_cross.append(max(valid_acc))
-        draw_graph_accuracy(epochs, train_acc, valid_acc)
+
+
+        #draw_graph_accuracy(epochs, train_acc, valid_acc)
 
     print(f"max train accuracy: {max(train_acc_cross)},"
           f" max validation accuracy: {max(valid_acc_cross)}")
     from statistics import mean
     print(f"average train accuracy: {mean(train_acc_cross)},"
           f" average validation accuracy: {mean(valid_acc_cross)}")
+    return mean(train_acc_cross), mean(valid_acc_cross)
 
 
-def run_epochs(model, train_loader, validation_loader, num_of_epochs=100, learning_rate=0.01):
+def run_epochs(model, train_loader, validation_loader, num_of_epochs=100,
+               learning_rate=0.01, l2_regular=True, l1_regular=False, reg_labmda=0.01):
     train_acc = []
     valid_acc = []
     counter_for_over_fitting = 0
 
     for epoch in range(num_of_epochs):
-        print(f'epoch: {epoch + 1}')
+        #print(f'epoch: {epoch + 1}')
 
         model.train()  # move to train mode
-        train(model, train_loader, learning_rate)  # train
+        train(model, train_loader, learning_rate, l2_regular, l1_regular, reg_labmda)  # train
 
         model.eval()  # move to valuation mode
         train_accuracy = evaluate(train_loader, model)  # valuate
         train_acc.append(train_accuracy)
-        print(f"train set accuracy: {train_accuracy}")
+        #print(f"train set accuracy: {train_accuracy}")
 
         valid_accuracy = evaluate(validation_loader, model)
-        print(f"validation set accuracy: {valid_accuracy}")
+        #print(f"validation set accuracy: {valid_accuracy}")
         valid_acc.append(valid_accuracy)
 
-        if train_accuracy - valid_accuracy > 0.05:
-            counter_for_over_fitting += 1
-            if counter_for_over_fitting > 5:
-                break
+        # if train_accuracy - valid_accuracy > 0.05:
+        #     counter_for_over_fitting += 1
+        #     if counter_for_over_fitting > 5:
+        #         break
 
     return train_acc, valid_acc, epoch+1  # if want to print
 
@@ -201,6 +214,30 @@ def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy):
     #plt.savefig('accuracy.png')
 
 
+def check_hyper_parameters(model, data):
+    learn_rate = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
+    lamdba_reg = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
+    epochs = [10, 20, 30, 50, 100]
+    parms = []
+    train = []
+    valid = []
+    all_combinations = [[i, j, k] for i in learn_rate
+                 for j in lamdba_reg
+                 for k in epochs]
+
+    for lr, lamdba_reg, epochs in all_combinations:
+        print(f"lr: {lr}, lamda: {lamdba_reg}, epochs: {epochs}")
+        mean_train, mean_valid = cross_validation(data, model, epochs, lr, True, False, lamdba_reg)
+        parms.append([lr,lamdba_reg,epochs])
+        train.append(mean_train)
+        valid.append(mean_valid)
+
+    best_index = valid.index(max(valid))
+    best_params = parms[best_index]
+    print(f"best in: lr={best_params[0]}, lambda={best_params[1]}, epochs={best_params[2]} \n"
+           f" train accuracy={train[best_index]}, valid accuracy={valid[best_index]}")
+
+
 def main():
     """
     main function for ex5
@@ -216,11 +253,10 @@ def main():
     if torch.cuda.is_available():
         model.cuda()
 
-    cross_validation(data_set, model)
-
-    model.eval()
-    print('hello')
-
+    #check_hyper_parameters(model, data_set)
+    cross_validation(data_set, model, 100, 0.02, True, False, 0.005)
+    #model.eval()
+    #print('hello')
 
 if __name__ == '__main__':
     main()

@@ -10,6 +10,15 @@ from IPython.display import Image
 import pydotplus
 import numpy as np
 
+def draw_tree(clf,feature_cols):
+    dot_data = StringIO()
+    export_graphviz(clf, out_file=dot_data,
+                    filled=True, rounded=True,
+                    special_characters=True, feature_names=feature_cols, class_names=['0', '1','2','3','4'])
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+    graph.write_png('facebook_dt.png')
+    Image(graph.create_png())
+
 
 def check_hyper_parameters(data_features, data_tags):
 
@@ -108,6 +117,16 @@ def main():
     y = pima.like  # Target variable
 
     check_hyper_parameters(X, y)
+
+    # need to change to take the best from k
+    clf = DecisionTreeClassifier(criterion='gini', max_depth=11, splitter='random', ccp_alpha=0.005)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                        random_state=1)  # 70% training and 30% test
+
+    clf = clf.fit(X_train, y_train)
+
+    draw_tree(clf, feature_cols)
+
     #cross_validation(X,y)
 
     # # Split dataset into training set and test set

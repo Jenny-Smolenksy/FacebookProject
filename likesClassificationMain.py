@@ -10,9 +10,9 @@ def main():
         test_file = "data/test.csv"
 
 
-        # neural_net  = NeuralNetworkFB(train_file)
-        # # train with best hyper parameters - may be taken from best params
-        # neural_net.train_model(10, 0.02, True, False, 0.005)
+        neural_net  = NeuralNetworkFB(train_file)
+        # train with best hyper parameters - may be taken from best params
+        neural_net.train_model(10, 0.02, True, False, 0.005)
         #neural_net.cross_validation(20, 0.02, True, False, 0.005)
         #best_params_net = neural_net.check_hyper_parameters()
         #neural_net.predict_test(test_file) #all predictions
@@ -31,9 +31,9 @@ def main():
 
             sample = data_x_test[i]
             real_tag = int(data_y_test[i])
-            #y_tag = neural_net.predict_sample_tag(sample)
-            y_tag = decision_tree.predict_sample(sample)
-            print(f"real tag : {real_tag}, prediction : {y_tag}")
+            y_tag_net = neural_net.predict_sample_tag(sample)
+            y_tag_tree = decision_tree.predict_sample(sample)
+            print(f"real tag : {real_tag}, prediction net : {y_tag_net}, prediction tree : {y_tag_tree}")
 
 
 

@@ -5,10 +5,35 @@ import torch.cuda
 from torch import nn, optim
 from torch.autograd import Variable
 from matplotlib import pyplot as plt
+import torch.utils.data as data
+import torch
 import numpy as np
-from FBPostData import FBPostData
 
 from sklearn.model_selection import StratifiedKFold, train_test_split
+
+class FBPostData(data.Dataset):
+
+    def __init__(self, specs, labels):
+        specs = specs.astype('float32')
+        self.specs = specs
+
+        labels = torch.LongTensor(labels)
+        self.classes = labels
+
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (specs, target) where target is class_index of the target class.
+        """
+        sample = self.specs[index]
+        target = self.classes[index]
+
+        return [sample, target]
+
+    def __len__(self):
+        return len(self.specs)
 
 
 class NeuralNet(nn.Module):
@@ -221,21 +246,20 @@ class NeuralNetworkFB:
 
     def train_model(self, epochs, lr, l2_reg, l1_reg, lambda_reg):
 
-        validation_split = .2
-        data_set_size = len(self.data_set_train)
-        indices = list(range(data_set_size))
-        split = int(np.floor(validation_split * data_set_size))
-        train_indices, val_indices = indices[split:], indices[:split]
-        samples = self.data_set_train.specs
-        tags = self.data_set_train.classes
+        # validation_split = .2
+        # data_set_size = len(self.data_set_train)
+        # indices = list(range(data_set_size))
+        # split = int(np.floor(validation_split * data_set_size))
+        # train_indices, val_indices = indices[split:], indices[:split]
+        # samples = self.data_set_train.specs
+        # tags = self.data_set_train.classes
 
-        train_data = FBPostData(samples[train_indices], tags[train_indices])
+        train_data = self.data_set_train
         train_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
-
-        validation_data = FBPostData(samples[val_indices], tags[val_indices])
+        #this time train with the whole train set
         validation_loader = \
-            torch.utils.data.DataLoader(validation_data, batch_size=32, shuffle=True)
+            torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
         self.run_epochs(train_loader, validation_loader, epochs, lr, l2_reg, l1_reg, lambda_reg)
 
 

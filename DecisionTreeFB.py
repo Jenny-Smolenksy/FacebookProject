@@ -87,22 +87,19 @@ def main():
     :return: 0 if successfully ended
     """
 
-    train_file = "data/processedDataAll.csv"
-
-    col_names = ['Page total likes','Type','Category','Post Month',
-                 'Post Weekday','Post Hour','Paid','Lifetime Post Total Reach',
-                 'Lifetime Post Total Impressions','Lifetime Post Impressions by people who have liked your Page',
-                 'Lifetime Post reach by people who like your Page','share','like']
+    train_file = "data/train.csv"
+    import csv
+    with open(train_file, 'r') as infile:
+        reader = csv.DictReader(infile)
+        fieldnames = reader.fieldnames
+    col_names = fieldnames[0].split(';')
     # load dataset
     pima = pd.read_csv(train_file,skiprows=1, header=None,delimiter=';', names=col_names)
 
     pima.head()
 
     # split dataset in features and target variable
-    feature_cols = ['Page total likes','Type','Category','Post Month',
-                 'Post Weekday','Post Hour','Paid','Lifetime Post Total Reach',
-                 'Lifetime Post Total Impressions','Lifetime Post Impressions by people who have liked your Page',
-                 'Lifetime Post reach by people who like your Page','share']
+    feature_cols = col_names[:-1]
     feature_col_y = ['like']
     X = pima[feature_cols]  # Features
     y = pima.like  # Target variable

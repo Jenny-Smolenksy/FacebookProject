@@ -135,11 +135,11 @@ def cross_validation(data, model, num_of_epochs=100, learning_rate=0.01,
 
         #draw_graph_accuracy(epochs, train_acc, valid_acc)
 
-    print(f"max train accuracy: {round((max(train_acc_cross)).item(),3)},"
-          f" max validation accuracy: {round((max(valid_acc_cross)).item(),3)}")
+    print(f"max train accuracy: {round((max(train_acc_cross)),3)},"
+          f" max validation accuracy: {round((max(valid_acc_cross)),3)}")
     from statistics import mean
-    train_mean = round((mean(train_acc_cross)).item(),3)
-    valid_mean = round((mean(valid_acc_cross)).item(),3)
+    train_mean = round((mean(train_acc_cross)),3)
+    valid_mean = round((mean(valid_acc_cross)),3)
     print(f"average train accuracy: {train_mean},"
           f" average validation accuracy: {valid_mean}")
     return train_mean, valid_mean

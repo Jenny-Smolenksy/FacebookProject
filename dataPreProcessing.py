@@ -97,7 +97,7 @@ def main():
     filename = 'data\dataset_Facebook.csv'
 
     #load text and ignore some coulmns
-    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,12,13,15,16))
+    data = np.loadtxt(filename, dtype=str, delimiter=";", usecols=(0,1,2,3,4,5,6,7,8,12,13,17,16))
 
     data_after_precess, title_row = pre_process_data(data)
 

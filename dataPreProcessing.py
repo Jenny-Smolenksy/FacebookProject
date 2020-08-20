@@ -102,7 +102,6 @@ def main():
     data_after_precess, title_row = pre_process_data(data)
 
     data_with_title = np.vstack((title_row, data_after_precess))
-    #np.savetxt('processedDataAll.csv', data, fmt='%s', delimiter=';')
     np.savetxt('data\processedDataAll.csv', data_with_title, fmt='%s', delimiter=';')
 
     train_x, train_y, test_x, test_y, data_train,data_test = train_test_separate(data_after_precess)
@@ -111,13 +110,6 @@ def main():
     np.savetxt('data/train.csv', train_with_title, fmt='%s', delimiter=';')
     test_with_title = np.vstack((title_row, data_test))
     np.savetxt('data/test.csv', test_with_title, fmt='%s', delimiter=';')
-
-    #np.savetxt('train_x.csv', train_x, fmt='%s', delimiter=';')
-    #np.savetxt('train_y.csv', train_y, fmt='%s', delimiter=';')
-    #np.savetxt('test_x.csv', test_x, fmt='%s', delimiter=';')
-    #np.savetxt('test_y.csv', test_y, fmt='%s', delimiter=';')
-
-    #sava train and test
 
 
 if __name__ == '__main__':

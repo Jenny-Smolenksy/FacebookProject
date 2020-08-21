@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import metrics
 import numpy as np
+import dataPreProcessing
 
 
 def draw_class(y_test, y_pred):
@@ -34,6 +35,9 @@ def main():
         warnings.simplefilter("ignore")
 
     # preProcessing
+    dataPreProcessing.data_pre_processing()
+
+
     # load train set
     train_file = "data/train.csv"
     test_file = "data/test.csv"
@@ -48,6 +52,7 @@ def main():
     decision_tree = DecisionTreeFB(train_file)
     # train with best
     decision_tree.train_tree("entropy", "random", 11, 0.01)
+    decision_tree.tree_visualization()
     # decision_tree.cross_validation()
     # best_params_tree = decision_tree.check_hyper_parameters()
     decision_tree.predict_test(test_file)
@@ -55,7 +60,7 @@ def main():
     logistic_regression = LogisticRegressionFB(train_file)
     # logistic_regression.cross_validation()
     # best_params = logistic_regression.check_hyper_parameters()
-    logistic_regression.train_logistic_regression()
+    logistic_regression.train_logistic_regression(0.2,'newton-cg', 1000)
     # train with best
     logistic_regression.predict_test(test_file)
 
@@ -77,6 +82,7 @@ def main():
         print(f"ensemble tag : {most_common}, real tag : {real_tag}")
         if most_common == real_tag:
             count_ensemble_correct += 1
+
     count_ensemble_correct /= len(data_y_test)
     count_ensemble_correct = round(count_ensemble_correct, 3)
     print(f"ensemble accuracy over test set: {count_ensemble_correct}")

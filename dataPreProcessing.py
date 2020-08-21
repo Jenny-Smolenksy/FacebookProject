@@ -92,7 +92,7 @@ def train_test_separate(data):
 
     return train_x, train_y, test_x, test_y,data_train,data_test
 
-def main():
+def data_pre_processing():
     #for data - 16 is like
     filename = 'data\dataset_Facebook.csv'
 
@@ -112,5 +112,3 @@ def main():
     np.savetxt('data/test.csv', test_with_title, fmt='%s', delimiter=';')
 
 
-if __name__ == '__main__':
-    main()

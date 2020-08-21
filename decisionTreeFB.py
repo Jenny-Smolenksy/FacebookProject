@@ -1,10 +1,14 @@
 # Load libraries
+from io import StringIO
+
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier  # Import Decision Tree Classifier
+import pydotplus
+from sklearn.tree import DecisionTreeClassifier, export_graphviz  # Import Decision Tree Classifier
 from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
 import csv
+from IPython.display import Image
 
 
 class DecisionTreeFB:
@@ -18,8 +22,8 @@ class DecisionTreeFB:
         pima = pd.read_csv(train_file, skiprows=1, header=None, delimiter=';', names=col_names)
         pima.head()
         # split dataset in features and target variable
-        feature_cols = col_names[:-1]
-        self.data_features = pima[feature_cols]  # Features
+        self.feature_cols = col_names[:-1]
+        self.data_features = pima[self.feature_cols]  # Features
         self.data_tags = pima.like  # Target variable
         self.clf = None
 
@@ -118,3 +122,12 @@ class DecisionTreeFB:
         sample = np.reshape(sample, (1, len(sample)))
         output = self.clf.predict(sample)
         return output.item()
+
+    def tree_visualization(self):
+        dot_data = StringIO()
+        export_graphviz(self.clf, out_file=dot_data,
+                        filled=True, rounded=True,
+                        special_characters=True, feature_names=self.feature_cols, class_names=['0', '1', '2', '3', '4'])
+        graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+        graph.write_png('decision_tree.png')
+        #Image(graph.create_png())

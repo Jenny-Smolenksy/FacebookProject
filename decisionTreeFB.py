@@ -40,7 +40,6 @@ class DecisionTreeFB:
         train_acc_cross, valid_acc_cross = [], []
 
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
-
         data_features = np.array(self.data_features)
         data_tags = np.array(self.data_tags)
 

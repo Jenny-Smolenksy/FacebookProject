@@ -1,15 +1,9 @@
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn import metrics
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-import numpy as np
+from sklearn.model_selection import StratifiedKFold
 import csv
-
+import numpy as np
 
 class LogisticRegressionFB:
 
@@ -25,106 +19,97 @@ class LogisticRegressionFB:
         feature_cols = col_names[:-1]
         self.data_features = pima[feature_cols]  # Features
         self.data_tags = pima.like  # Target variable
+        self.model = None
+
+    def cross_validation(self, c_value = 100000000000000000 , solver='lbfgs', max_iter=100):
+        train_acc_cross, valid_acc_cross = [], []
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        data_features = np.array(self.data_features)
+        data_tags = np.array(self.data_tags)
+
+        for train_index, valid_index in skf.split(data_features, data_tags):
+            train_data = data_features[train_index]
+            train_tags = data_tags[train_index]
+
+            validation_data = data_features[valid_index]
+            validation_tags = data_tags[valid_index]
+
+            logreg = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
+                                    multi_class='multinomial')
+
+            # Train Logistic regression Tree Classifer
+            logreg = logreg.fit(train_data, train_tags)
+
+            # Predict the response for test dataset
+            validation_predictions = logreg.predict(validation_data)
+            train_predictions = logreg.predict(train_data)
+
+            train_acc_cross.append(metrics.accuracy_score(train_tags, train_predictions))
+            valid_acc_cross.append(metrics.accuracy_score(validation_tags, validation_predictions))
+
+        print(f"max train accuracy: {round((max(train_acc_cross)).item(), 3)},"
+              f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
+        from statistics import mean
+
+        train_mean = round((mean(train_acc_cross)).item(), 3)
+        valid_mean = round((mean(valid_acc_cross)).item(), 3)
+        print(f"average train accuracy: {train_mean},"
+              f" average validation accuracy: {valid_mean}")
+        return train_mean, valid_mean
+
+    def check_hyper_parameters(self):
+        c_value = [0.01, 0.1, 1, 10, 100, 1000, 10000]
+        solver = ['newton-cg', 'lbfgs', 'sag', 'saga']
+        max_iter = [100, 1000, 100000, 1000000]
+
+        parms = []
+        train = []
+        valid = []
+        all_combinations = [[j, k, z]
+                            for j in c_value
+                            for k in solver
+                            for z in max_iter]
+
+        for penalty, c_value, solver, max_iter in all_combinations:
+            print(f"C: {c_value}, solver: {solver}, max_iter: {max_iter}")
+            mean_train, mean_valid = self.cross_validation(self, c_value, solver, max_iter)
+            parms.append([penalty, c_value, solver, max_iter])
+            train.append(mean_train)
+            valid.append(mean_valid)
+
+        best_index = valid.index(max(valid))
+        best_params = parms[best_index]
+        print(f"best in: C={best_params[0]}, solver={best_params[1]},"
+              f"max_iter={best_params[2]} \n"
+              f" train accuracy={train[best_index]}, valid accuracy={valid[best_index]}")
+        dict_best = {
+            "c": best_params[0],
+            "solver": best_params[1],
+            "max_iter": best_params[2]}
+        return dict_best
+
+    def train_logistic_regression(self, c_value = 100000000000000000 , solver='lbfgs', max_iter=100):
+        print('training logistic regression model')
+        self.model = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
+                                    multi_class='multinomial')
+        self.model = self.model.fit(self.data_features, self.data_tags)
 
 
-def draw_class(y_test, y_pred):
-    cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
-    cnf_matrix
+    def predict_test(self, test_data_file):
+        data_x_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=range(0, 12))
+        data_y_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=12)
 
-    class_names = [0, 1, 2, 3, 4]  # name  of classes
-    fig, ax = plt.subplots()
-    tick_marks = np.arange(len(class_names))
-    plt.xticks(tick_marks, class_names)
-    plt.yticks(tick_marks, class_names)
-    # create heatmap
-    sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu", fmt='g')
-    ax.xaxis.set_label_position("top")
-    plt.tight_layout()
-    plt.title('Confusion matrix', y=1.1)
-    plt.ylabel('Actual label')
-    plt.xlabel('Predicted label')
+        y_pred = self.model.predict(data_x_test)
+        accuracy = metrics.accuracy_score(data_y_test, y_pred)
+        accuracy = round(accuracy,3)
+        print(f"accuracy on test set: {accuracy}")
 
-    plt.show()
+        return accuracy
+
+    def predict_sample(self, sample):
+        sample = np.reshape(sample, (1, len(sample)))
+        output = self.model.predict(sample)
+        return output.item()
 
 
-def check_hyper_parameters(data_features, data_tags):
-    penalty = ['l2', 'elasticnet', 'none']
-    c_value = [2, 1, 0.5, 0.1, 0.001, 0.0001, 0.02, 0.005, 0.0005]
-    solver = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
-    max_iter = [10000, 20000, 50000, 100000]
 
-    parms = []
-    train = []
-    valid = []
-    all_combinations = [[i, j, k, z] for i in penalty
-                        for j in c_value
-                        for k in solver
-                        for z in max_iter]
-
-    for penalty, c_value, solver, max_iter in all_combinations:
-        print(f"penately: {penalty}, C: {c_value}, solver: {solver}, max_iter: {max_iter}")
-        mean_train, mean_valid = cross_validation(data_features, data_tags, penalty, c_value, solver, max_iter)
-        parms.append([penalty, c_value, solver, max_iter])
-        train.append(mean_train)
-        valid.append(mean_valid)
-
-    best_index = valid.index(max(valid))
-    best_params = parms[best_index]
-    print(f"best in: penately={best_params[0]}, C={best_params[1]}, solver={best_params[2]},"
-          f"max_iter={best_params[3]} \n"
-          f" train accuracy={train[best_index]}, valid accuracy={valid[best_index]}")
-
-
-def cross_validation(data_features, data_tags, penalty, c_value, solver, max_iter):
-    train_acc_cross, valid_acc_cross = [], []
-
-    from sklearn.model_selection import StratifiedKFold
-
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
-
-    data_features = np.array(data_features)
-    data_tags = np.array(data_tags)
-
-    for train_index, valid_index in skf.split(data_features, data_tags):
-        train_data = data_features[train_index]
-        train_tags = data_tags[train_index]
-
-        validation_data = data_features[valid_index]
-        validation_tags = data_tags[valid_index]
-
-        logreg = LogisticRegression(penalty=penalty, C=c_value, solver=solver, max_iter=max_iter)
-
-        # Train Logistic regression Tree Classifer
-        logreg = logreg.fit(train_data, train_tags)
-
-        # Predict the response for test dataset
-        validation_predictions = logreg.predict(validation_data)
-        train_predictions = logreg.predict(train_data)
-
-        train_acc_cross.append(metrics.accuracy_score(train_tags, train_predictions))
-        valid_acc_cross.append(metrics.accuracy_score(validation_tags, validation_predictions))
-
-    print(f"max train accuracy: {round((max(train_acc_cross)).item(), 3)},"
-          f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
-    from statistics import mean
-    train_mean = round((mean(train_acc_cross)).item(), 3)
-    valid_mean = round((mean(valid_acc_cross)).item(), 3)
-    print(f"average train accuracy: {train_mean},"
-          f" average validation accuracy: {valid_mean}")
-    return train_mean, valid_mean
-
-
-def main():
-    # check
-    check_hyper_parameters(X, y)
-
-    #  logreg = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
-    #                              intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear',
-    #                              max_iter=10000, multi_class='ovr', verbose=0)
-    # Split dataset into training set and test set
-
-    print("hello")
-
-
-if __name__ == '__main__':
-    main()

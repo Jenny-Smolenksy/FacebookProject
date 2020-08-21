@@ -80,7 +80,7 @@ class NeuralNetworkFB:
         if torch.cuda.is_available():
             self.model.cuda()
 
-    def cross_validation(self,num_of_epochs=100, learning_rate=0.01,
+    def cross_validation(self,num_of_epochs=30, learning_rate=0.01,
                          l2_regular=False, l1_regular=False, reg_labmda=0.01):
 
         torch.save(self.model, "model")
@@ -253,7 +253,7 @@ class NeuralNetworkFB:
         # train_indices, val_indices = indices[split:], indices[:split]
         # samples = self.data_set_train.specs
         # tags = self.data_set_train.classes
-
+        print('training neural network model')
         train_data = self.data_set_train
         train_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
@@ -288,7 +288,7 @@ class NeuralNetworkFB:
                     count_success += 1
 
         success_rate = round((count_success/ len(data_y_test)),3)
-        print(f"test success: {success_rate}")
+        print(f"accuracy on test set: {success_rate}")
         return success_rate
 
     def predict_sample_tag(self, sample):

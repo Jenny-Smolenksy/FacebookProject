@@ -7,8 +7,24 @@ import seaborn as sns
 from sklearn import metrics
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-
 import numpy as np
+import csv
+
+
+class LogisticRegressionFB:
+
+    def __init__(self, data_file):
+        with open(data_file, 'r') as infile:
+            reader = csv.DictReader(infile)
+            fieldnames = reader.fieldnames
+        col_names = fieldnames[0].split(';')
+        # load dataset
+        pima = pd.read_csv(data_file, skiprows=1, header=None, delimiter=';', names=col_names)
+        pima.head()
+        # split dataset in features and target variable
+        feature_cols = col_names[:-1]
+        self.data_features = pima[feature_cols]  # Features
+        self.data_tags = pima.like  # Target variable
 
 
 def draw_class(y_test, y_pred):
@@ -32,10 +48,10 @@ def draw_class(y_test, y_pred):
 
 
 def check_hyper_parameters(data_features, data_tags):
-    penalty = ['l2']
-    c_value = [0.01, 0.1, 1, 10 ,100 ,1000, 10000]
-    solver = ['newton-cg', 'lbfgs', 'sag', 'saga']
-    max_iter = [100, 1000, 100000, 1000000]
+    penalty = ['l2', 'elasticnet', 'none']
+    c_value = [2, 1, 0.5, 0.1, 0.001, 0.0001, 0.02, 0.005, 0.0005]
+    solver = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+    max_iter = [10000, 20000, 50000, 100000]
 
     parms = []
     train = []
@@ -76,8 +92,7 @@ def cross_validation(data_features, data_tags, penalty, c_value, solver, max_ite
         validation_data = data_features[valid_index]
         validation_tags = data_tags[valid_index]
 
-        logreg = LogisticRegression(penalty=penalty, C=c_value, solver=solver, max_iter=max_iter,
-                                    multi_class='multinomial')
+        logreg = LogisticRegression(penalty=penalty, C=c_value, solver=solver, max_iter=max_iter)
 
         # Train Logistic regression Tree Classifer
         logreg = logreg.fit(train_data, train_tags)
@@ -100,31 +115,8 @@ def cross_validation(data_features, data_tags, penalty, c_value, solver, max_ite
 
 
 def main():
-    train_file = "data/train.csv"
-    # load dataset
-    col_names = ['Page total likes', 'Type', 'Category', 'Post Month',
-                 'Post Weekday', 'Post Hour', 'Paid', 'Lifetime Post Total Reach',
-                 'Lifetime Post Total Impressions', 'Lifetime Post Impressions by people who have liked your Page',
-                 'Lifetime Post reach by people who like your Page', 'share', 'like']
-
-    pima = pd.read_csv(train_file, skiprows=1, header=None, delimiter=';', names=col_names)
-
-    pima.head()
-
-    # split dataset in features and target variable
-    feature_cols = ['Page total likes', 'Type', 'Category', 'Post Month',
-                    'Post Weekday', 'Post Hour', 'Paid', 'Lifetime Post Total Reach',
-                    'Lifetime Post Total Impressions', 'Lifetime Post Impressions by people who have liked your Page',
-                    'Lifetime Post reach by people who like your Page', 'share']
-    feature_col_y = ['like']
-    X = pima[feature_cols]  # Features
-    y = pima.like  # Target variable
-
     # check
     check_hyper_parameters(X, y)
-   # cross_validation(X, y, 'l2', 1e10, 'newton-cg', 10000)
-
-
 
     #  logreg = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
     #                              intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear',

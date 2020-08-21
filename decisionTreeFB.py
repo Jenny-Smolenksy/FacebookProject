@@ -1,17 +1,11 @@
 # Load libraries
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier # Import Decision Tree Classifier
-from sklearn.model_selection import train_test_split # Import train_test_split function
-from sklearn import metrics #Import scikit-learn metrics module for accuracy calculation
-
+from sklearn.tree import DecisionTreeClassifier  # Import Decision Tree Classifier
+from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
 from sklearn.model_selection import StratifiedKFold
-
-from sklearn.tree import export_graphviz
-from sklearn.externals.six import StringIO
-from IPython.display import Image
-import pydotplus
 import numpy as np
 import csv
+
 
 class DecisionTreeFB:
     def __init__(self, train_file):
@@ -25,7 +19,6 @@ class DecisionTreeFB:
         pima.head()
         # split dataset in features and target variable
         feature_cols = col_names[:-1]
-        feature_col_y = ['like']
         self.data_features = pima[feature_cols]  # Features
         self.data_tags = pima.like  # Target variable
         self.clf = None
@@ -33,7 +26,6 @@ class DecisionTreeFB:
     def create_tree(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
         self.clf = DecisionTreeClassifier(criterion="entropy", max_depth=10)
         clf = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter, ccp_alpha=ccp_alpha)
-
 
     def cross_validation(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
 
@@ -71,7 +63,6 @@ class DecisionTreeFB:
               f" average validation accuracy: {valid_mean}")
         return train_mean, valid_mean
 
-
     def check_hyper_parameters(self):
 
         criterion = ["gini", "entropy"]
@@ -83,9 +74,9 @@ class DecisionTreeFB:
         train = []
         valid = []
         all_combinations = [[i, j, k, z] for i in criterion
-                     for j in splitter
-                     for k in max_depth
-                     for z in ccp_alphas]
+                            for j in splitter
+                            for k in max_depth
+                            for z in ccp_alphas]
 
         for criterion, splitter, max_depth, ccp_alpha in all_combinations:
             print(f"criterion: {criterion}, splitter: {splitter}, max_depth: {max_depth}, ccp_alpha: {ccp_alpha}")
@@ -107,8 +98,9 @@ class DecisionTreeFB:
         return dict_best
 
     def train_tree(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
+        print('training decision tree model')
         self.create_tree(criterion, splitter, max_depth, ccp_alpha)
-        #train using all train data
+        # train using all train data
         self.clf = self.clf.fit(self.data_features, self.data_tags)
 
     def predict_test(self, test_data_file):
@@ -117,8 +109,8 @@ class DecisionTreeFB:
 
         y_pred = self.clf.predict(data_x_test)
         accuracy = metrics.accuracy_score(data_y_test, y_pred)
-
-        print(f"accuracy: {accuracy}")
+        accuracy = round(accuracy, 3)
+        print(f"accuracy on test set: {accuracy}")
 
         return accuracy
 
@@ -126,4 +118,3 @@ class DecisionTreeFB:
         sample = np.reshape(sample, (1, len(sample)))
         output = self.clf.predict(sample)
         return output.item()
-

@@ -33,7 +33,7 @@ def draw_class(y_test, y_pred):
 
 def check_hyper_parameters(data_features, data_tags):
     penalty = ['l2']
-    c_value = [0.0005, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+    c_value = [0.01, 0.1, 1, 10 ,100 ,1000, 10000]
     solver = ['newton-cg', 'lbfgs', 'sag', 'saga']
     max_iter = [100, 1000, 100000, 1000000]
 
@@ -121,8 +121,10 @@ def main():
     y = pima.like  # Target variable
 
     # check
-    #   check_hyper_parameters(X, y)
-    cross_validation(X, y, 'none', 0.1, 'newton-cg', 100)
+    check_hyper_parameters(X, y)
+   # cross_validation(X, y, 'l2', 1e10, 'newton-cg', 10000)
+
+
 
     #  logreg = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
     #                              intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear',

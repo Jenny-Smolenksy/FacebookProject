@@ -40,7 +40,7 @@ def main():
 
     neural_net = NeuralNetworkFB(train_file)
     # train with best hyper parameters - may be taken from best params
-    neural_net.train_model(10, 0.02, True, False, 0.005)
+    neural_net.train_model(100, 0.02, True, False, 0.005)
     # neural_net.cross_validation()
     # best_params_net = neural_net.check_hyper_parameters()
     neural_net.predict_test(test_file)  # all predictions
@@ -62,6 +62,7 @@ def main():
     data_x_test = np.loadtxt(test_file, skiprows=1, delimiter=';', usecols=range(0, 12))
     data_y_test = np.loadtxt(test_file, skiprows=1, delimiter=';', usecols=12)
 
+    count_ensemble_correct = 0
     for i in range(len(data_x_test)):
         sample = data_x_test[i]
         real_tag = int(data_y_test[i])
@@ -70,6 +71,15 @@ def main():
         y_tag_regression = logistic_regression.predict_sample(sample)
         print(f"real tag : {real_tag}, prediction net : {y_tag_net}, "
               f"prediction tree : {y_tag_tree}, prediction regression : {y_tag_regression}")
+
+        tags = [y_tag_net, y_tag_tree, y_tag_regression]
+        most_common = max(set(tags), key = tags.count)
+        print(f"ensemble tag : {most_common}, real tag : {real_tag}")
+        if most_common == real_tag:
+            count_ensemble_correct += 1
+    count_ensemble_correct /= len(data_y_test)
+    count_ensemble_correct = round(count_ensemble_correct, 3)
+    print(f"ensemble accuracy over test set: {count_ensemble_correct}")
 
 
 if __name__ == '__main__':

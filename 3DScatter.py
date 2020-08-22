@@ -1,8 +1,5 @@
-from mpl_toolkits import mplot3d
-import numpy as np
 import matplotlib.pyplot as plt
 import pandas
-import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 
 excel_data_df = pandas.read_csv('data\processedDataAll.csv', delimiter=';')

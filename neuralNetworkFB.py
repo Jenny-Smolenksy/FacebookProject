@@ -1,4 +1,3 @@
-
 import torch.cuda
 import torch.utils.data
 import torch.cuda
@@ -46,29 +45,28 @@ class NeuralNet(nn.Module):
 
         self.relu = nn.ReLU()
         self.batch_norm = nn.BatchNorm1d(12)
-        self.linear1 = nn.Linear(12, 32)
-        self.batch_norm64 = nn.BatchNorm1d(64)
-        self.linear2 = nn.Linear(32, 64)
+        self.linear1 = nn.Linear(12, 64)
+        self.linear2 = nn.Linear(64, 128)
+        self.batch_norm128 = nn.BatchNorm1d(128)
+        self.linear3 = nn.Linear(128, 32)
         self.batch_norm32 = nn.BatchNorm1d(32)
-        self.linear3 = nn.Linear(64, 32)
         self.linear4 = nn.Linear(32, 5)
 
     def forward(self, x):
-
         x = Variable(x)
         if torch.cuda.is_available():  # use cuda if possible
             x = x.cuda()
 
         x = self.batch_norm(x)
         x = self.relu(self.linear1(x))
-        x = self.batch_norm32(x)
         x = self.relu(self.linear2(x))
-        x = self.batch_norm64(x)
+        x = self.batch_norm128(x)
         x = self.relu(self.linear3(x))
         x = self.batch_norm32(x)
         x = self.relu(self.linear4(x))
 
         return x
+
 
 class NeuralNetworkFB:
     def __init__(self, train_data_file):
@@ -122,7 +120,6 @@ class NeuralNetworkFB:
 
     def train(self, train_loader, learning_rate=0.001, l2_regular=False, l1_regular=False, reg_labmda=0.01):
 
-        self.model = NeuralNet()
         if torch.cuda.is_available():
             self.model.cuda()
         loss_function = nn.CrossEntropyLoss()  # set loss function
@@ -267,6 +264,7 @@ class NeuralNetworkFB:
         #this time train with the whole train set
         validation_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
+        self.model = NeuralNet()
         train_acc, valid_acc, epoch = self.run_epochs(train_loader, validation_loader, epochs, lr, l2_reg, l1_reg, lambda_reg)
         print(f"train accuracy: {train_acc[-1]}")
 
@@ -295,5 +293,3 @@ class NeuralNetworkFB:
         output = output.max(1, keepdim=True)[1]  # get index of max log - probability
 
         return output.item()
-
-

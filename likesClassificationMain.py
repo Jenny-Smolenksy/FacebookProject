@@ -36,20 +36,30 @@ def main():
         warnings.simplefilter("ignore")
 
     # preProcessing
-    # dataPreProcessing.data_pre_processing()
+  #  dataPreProcessing.data_pre_processing()
 
 
     # load train set
     train_file = "data/train.csv"
     test_file = "data/test.csv"
 
-    #neural_net = NeuralNetworkFB(train_file)
+    neural_net_dup = NeuralNetworkFB(train_file)
+
+    neural_net = NeuralNetworkFB(train_file)
     # # train with best hyper parameters - may be taken from best params
     #
     #neural_net.cross_validation(30, 0.001, l1_regular=False, l2_regular=False,  reg_labmda=0, draw_accuracy=True) # without regularization
-    # neural_net.train_model(30, 0.01, True, False, 0.001)
+
+    print("Regulaer NN")
+    neural_net.train_model(100, 0.02, True, False, 0.005)
+
+
     # #best_params_net = neural_net.check_hyper_parameters()
-    # neural_net.predict_test(test_file)  # all predictions
+    print("Regulaer NN PREDICT TEST")
+    neural_net.predict_test(test_file)  # all predictions
+
+
+
     #
     #decision_tree = DecisionTreeFB(train_file)
     #decision_tree.cross_validation_by_samples(criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05)
@@ -60,9 +70,9 @@ def main():
     #best_params_tree = decision_tree.check_hyper_parameters()
     # decision_tree.predict_test(test_file)
     #
-    logistic_regression = LogisticRegressionFB(train_file)
+    # logistic_regression = LogisticRegressionFB(train_file)
     #logistic_regression.cross_validation_by_samples(c_value=1000, solver='lbfgs', max_iter=100)
-    logistic_regression.cross_validation(c_value=10, solver='newton-cg', max_iter=100000)
+    # logistic_regression.cross_validation(c_value=10, solver='newton-cg', max_iter=100000)
     # # best_params = logistic_regression.check_hyper_parameters()
     #logistic_regression.train_logistic_regression(c_value=10, solver='newton-cg', max_iter=100000)
     # # train with best

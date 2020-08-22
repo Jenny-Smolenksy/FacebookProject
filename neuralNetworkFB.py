@@ -46,11 +46,11 @@ class NeuralNet(nn.Module):
 
         self.relu = nn.ReLU()
         self.batch_norm = nn.BatchNorm1d(12)
-        self.linear1 = nn.Linear(12, 64)
-        self.linear2 = nn.Linear(64, 128)
-        self.batch_norm128 = nn.BatchNorm1d(128)
-        self.linear3 = nn.Linear(128, 32)
+        self.linear1 = nn.Linear(12, 32)
+        self.batch_norm64 = nn.BatchNorm1d(64)
+        self.linear2 = nn.Linear(32, 64)
         self.batch_norm32 = nn.BatchNorm1d(32)
+        self.linear3 = nn.Linear(64, 32)
         self.linear4 = nn.Linear(32, 5)
 
     def forward(self, x):
@@ -61,8 +61,9 @@ class NeuralNet(nn.Module):
 
         x = self.batch_norm(x)
         x = self.relu(self.linear1(x))
+        x = self.batch_norm32(x)
         x = self.relu(self.linear2(x))
-        x = self.batch_norm128(x)
+        x = self.batch_norm64(x)
         x = self.relu(self.linear3(x))
         x = self.batch_norm32(x)
         x = self.relu(self.linear4(x))
@@ -81,9 +82,8 @@ class NeuralNetworkFB:
             self.model.cuda()
 
     def cross_validation(self,num_of_epochs=30, learning_rate=0.01,
-                         l2_regular=False, l1_regular=False, reg_labmda=0.01):
+                         l2_regular=False, l1_regular=False, reg_labmda=0.01, draw_accuracy=False):
 
-        torch.save(self.model, "model")
         train_acc_cross, valid_acc_cross = [], []
 
         samples = self.data_set_train.specs
@@ -98,14 +98,18 @@ class NeuralNetworkFB:
             validation_loader = \
                 torch.utils.data.DataLoader(validation_data, batch_size=32, shuffle=True)
 
-            self.model = torch.load("model")  # to start training from beginning
+            self.model = NeuralNet()  # to start training from beginning
+            if torch.cuda.is_available():
+                self.model.cuda()
+
             train_acc, valid_acc, epochs = \
                 self.run_epochs(train_loader, validation_loader, num_of_epochs,
                            learning_rate, l2_regular, l1_regular, reg_labmda)
             train_acc_cross.append(max(train_acc))
             valid_acc_cross.append(max(valid_acc))
 
-            # draw_graph_accuracy(epochs, train_acc, valid_acc)
+            if draw_accuracy:
+                NeuralNetworkFB.draw_graph_accuracy(epochs, train_acc, valid_acc)
 
         print(f"max train accuracy: {round((max(train_acc_cross)), 3)},"
               f" max validation accuracy: {round((max(valid_acc_cross)), 3)}")
@@ -118,6 +122,9 @@ class NeuralNetworkFB:
 
     def train(self, train_loader, learning_rate=0.001, l2_regular=False, l1_regular=False, reg_labmda=0.01):
 
+        self.model = NeuralNet()
+        if torch.cuda.is_available():
+            self.model.cuda()
         loss_function = nn.CrossEntropyLoss()  # set loss function
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         if l2_regular:
@@ -260,7 +267,8 @@ class NeuralNetworkFB:
         #this time train with the whole train set
         validation_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
-        self.run_epochs(train_loader, validation_loader, epochs, lr, l2_reg, l1_reg, lambda_reg)
+        train_acc, valid_acc, epoch = self.run_epochs(train_loader, validation_loader, epochs, lr, l2_reg, l1_reg, lambda_reg)
+        print(f"train accuracy: {train_acc[-1]}")
 
 
     def predict_test(self, test_data_file):
@@ -272,22 +280,8 @@ class NeuralNetworkFB:
         test_loader = \
             torch.utils.data.DataLoader(data_set_test, batch_size=32, shuffle=False)
 
-        count_success = 0
-
         self.model.eval()
-        for data, labels in test_loader:
-
-            output = self.model(data)  # get prediction
-            output = torch.autograd.Variable(output, requires_grad=True)
-            pred = output.max(1, keepdim=True)[1]  # get index of max log - probability
-
-            for i in range(0, len(pred)):  # go over samples in the batch
-                y_tag = pred[i]
-                y_real = labels[i]
-                if y_tag == y_real:
-                    count_success += 1
-
-        success_rate = round((count_success/ len(data_y_test)),3)
+        success_rate = self.evaluate(test_loader)
         print(f"accuracy on test set: {success_rate}")
         return success_rate
 

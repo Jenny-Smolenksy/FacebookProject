@@ -51,12 +51,12 @@ def main():
     #neural_net.cross_validation(30, 0.001, l1_regular=False, l2_regular=False,  reg_labmda=0, draw_accuracy=True) # without regularization
 
     print("Regulaer NN")
-    neural_net.train_model(100, 0.02, True, False, 0.005)
+    #neural_net.train_model(100, 0.02, True, False, 0.005)
 
 
-    # #best_params_net = neural_net.check_hyper_parameters()
-    print("Regulaer NN PREDICT TEST")
-    neural_net.predict_test(test_file)  # all predictions
+    best_params_net = neural_net.check_hyper_parameters()
+    #print("Regulaer NN PREDICT TEST")
+    #neural_net.predict_test(test_file)  # all predictions
 
 
 

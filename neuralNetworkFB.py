@@ -10,6 +10,7 @@ import numpy as np
 
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
+
 class FBPostData(data.Dataset):
 
     def __init__(self, specs, labels):
@@ -47,10 +48,11 @@ class NeuralNet(nn.Module):
         self.batch_norm = nn.BatchNorm1d(12)
         self.linear1 = nn.Linear(12, 64)
         self.linear2 = nn.Linear(64, 128)
-        self.batch_norm128 = nn.BatchNorm1d(128)
         self.linear3 = nn.Linear(128, 32)
-        self.batch_norm32 = nn.BatchNorm1d(32)
         self.linear4 = nn.Linear(32, 5)
+        self.batch_norm32 = nn.BatchNorm1d(32)
+        self.batch_norm64 = nn.BatchNorm1d(64)
+        self.batch_norm128 = nn.BatchNorm1d(128)
 
     def forward(self, x):
         x = Variable(x)
@@ -59,6 +61,7 @@ class NeuralNet(nn.Module):
 
         x = self.batch_norm(x)
         x = self.relu(self.linear1(x))
+        x = self.batch_norm64(x)
         x = self.relu(self.linear2(x))
         x = self.batch_norm128(x)
         x = self.relu(self.linear3(x))
@@ -79,14 +82,15 @@ class NeuralNetworkFB:
         if torch.cuda.is_available():
             self.model.cuda()
 
-    def cross_validation(self,num_of_epochs=30, learning_rate=0.01,
-                         l2_regular=False, l1_regular=False, reg_labmda=0.01, draw_accuracy=False):
+    def cross_validation(self, num_of_epochs=30, learning_rate=0.01,
+                         l1_regular=False, l2_regular=False, reg_labmda=0.01, draw_accuracy=False):
 
         train_acc_cross, valid_acc_cross = [], []
 
         samples = self.data_set_train.specs
         tags = self.data_set_train.classes
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        cross_index = 1
         for train_index, valid_index in skf.split(samples, tags):
             train_data = FBPostData(samples[train_index], tags[train_index])
             train_loader = \
@@ -102,12 +106,13 @@ class NeuralNetworkFB:
 
             train_acc, valid_acc, epochs = \
                 self.run_epochs(train_loader, validation_loader, num_of_epochs,
-                           learning_rate, l2_regular, l1_regular, reg_labmda)
+                                learning_rate, l1_regular, l2_regular, reg_labmda)
             train_acc_cross.append(max(train_acc))
             valid_acc_cross.append(max(valid_acc))
 
             if draw_accuracy:
-                NeuralNetworkFB.draw_graph_accuracy(epochs, train_acc, valid_acc)
+                NeuralNetworkFB.draw_graph_accuracy(epochs, train_acc, valid_acc, cross_index)
+                cross_index += 1
 
         print(f"max train accuracy: {round((max(train_acc_cross)), 3)},"
               f" max validation accuracy: {round((max(valid_acc_cross)), 3)}")
@@ -118,7 +123,7 @@ class NeuralNetworkFB:
               f" average validation accuracy: {valid_mean}")
         return train_mean, valid_mean
 
-    def train(self, train_loader, learning_rate=0.001, l2_regular=False, l1_regular=False, reg_labmda=0.01):
+    def train(self, train_loader, learning_rate=0.001, l1_regular=False, l2_regular=False, reg_labmda=0.01):
 
         if torch.cuda.is_available():
             self.model.cuda()
@@ -143,13 +148,11 @@ class NeuralNetworkFB:
             if l1_regular:
                 reg = 0
                 for params in self.model.parameters():
-                    reg += abs(0.5*(params**2)).sum()
+                    reg += abs(0.5 * (params ** 2)).sum()
                     loss += reg_labmda * reg
-
 
             loss.backward()  # back propagation
             optimizer.step()  # optimizer step
-
 
     def evaluate(self, data_loader):
         """
@@ -175,24 +178,24 @@ class NeuralNetworkFB:
         return round(accuracy.item(), 3)
 
     def run_epochs(self, train_loader, validation_loader, num_of_epochs=100,
-                   learning_rate=0.01, l2_regular=True, l1_regular=False, reg_labmda=0.01):
+                   learning_rate=0.01, l1_regular=False, l2_regular=True, reg_labmda=0.01):
         train_acc = []
         valid_acc = []
         counter_for_over_fitting = 0
 
         for epoch in range(num_of_epochs):
-            #print(f'epoch: {epoch + 1}')
+            # print(f'epoch: {epoch + 1}')
 
             self.model.train()  # move to train mode
-            self.train(train_loader, learning_rate, l2_regular, l1_regular, reg_labmda)  # train
+            self.train(train_loader, learning_rate, l1_regular, l2_regular, reg_labmda)  # train
 
             self.model.eval()  # move to valuation mode
             train_accuracy = self.evaluate(train_loader)  # valuate
             train_acc.append(train_accuracy)
-            #print(f"train set accuracy: {train_accuracy}")
+            # print(f"train set accuracy: {train_accuracy}")
 
             valid_accuracy = self.evaluate(validation_loader)
-            #print(f"validation set accuracy: {valid_accuracy}")
+            # print(f"validation set accuracy: {valid_accuracy}")
             valid_acc.append(valid_accuracy)
 
             # if train_accuracy - valid_accuracy > 0.05:
@@ -200,9 +203,9 @@ class NeuralNetworkFB:
             #     if counter_for_over_fitting > 5:
             #         break
 
-        return train_acc, valid_acc, epoch+1  # if want to print
+        return train_acc, valid_acc, epoch + 1  # if want to print
 
-    def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy):
+    def draw_graph_accuracy(num_of_epochs, train_accuracy, validation_accuracy, file_index=0):
         """
         this function creates graph of train and validation accuracy per epoch
         :param num_of_epochs:
@@ -210,6 +213,7 @@ class NeuralNetworkFB:
         :param validation_accuracy:
         :return: none
         """
+        plt.clf()
         x = list(range(1, num_of_epochs + 1))
         plt.plot(x, validation_accuracy, label="validation", color='blue', linewidth=2)
         plt.plot(x, train_accuracy, label="train", color='green', linewidth=2)
@@ -217,9 +221,11 @@ class NeuralNetworkFB:
         plt.xlabel('number of epoch')
         plt.ylabel('accuracy')
         plt.legend()
-        plt.show()
-        # plt.savefig('accuracy.png')
+        # plt.show()
+        file_name = f"net-accuracy{file_index}.png"
+        plt.savefig(file_name)
 
+    @property
     def check_hyper_parameters(self):
         learn_rate = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
         lamdba_reg = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
@@ -227,28 +233,54 @@ class NeuralNetworkFB:
         parms = []
         train = []
         valid = []
-        all_combinations = [[i, j, k] for i in learn_rate
+        all_combinations = [[i, j, k, True, False] for i in learn_rate
                             for j in lamdba_reg
                             for k in epochs]
+        all_combinations.extend([[i, j, k, False, True] for i in learn_rate
+                                 for j in lamdba_reg
+                                 for k in epochs])
 
-        for lr, lamdba_reg, epochs in all_combinations:
-            print(f"lr: {lr}, lamda: {lamdba_reg}, epochs: {epochs}")
-            mean_train, mean_valid = self.cross_validation(epochs, lr, True, False, lamdba_reg)
-            parms.append([lr, lamdba_reg, epochs])
+        for lr, lamdba_reg, epochs, l1_reg, l2_reg in all_combinations:
+            print(f"lr: {lr}, lamda: {lamdba_reg}, epochs: {epochs}, l1: {l1_reg}, l2: {l2_reg}")
+            mean_train, mean_valid = self.cross_validation(epochs, lr, l1_reg, l2_reg, lamdba_reg)
+            parms.append([lr, lamdba_reg, epochs, l1_reg, l2_reg])
             train.append(mean_train)
             valid.append(mean_valid)
 
         best_index = valid.index(max(valid))
         best_params = parms[best_index]
-        print(f"best in: lr={best_params[0]}, lambda={best_params[1]}, epochs={best_params[2]} \n"
+        print(f"best in: lr={best_params[0]}, lambda={best_params[1]}, epochs={best_params[2]},"
+              f" l1_reg={best_params[3]}, l2_reg={best_params[4]} \n"
               f" train accuracy={train[best_index]}, valid accuracy={valid[best_index]}")
         dict_best = {
             "lr": best_params[0],
-            "lambda" : best_params[1],
-            "epochs": best_params[2]}
+            "lambda": best_params[1],
+            "epochs": best_params[2],
+            "l1": best_params[3],
+            "l2": best_params[4]}
+
         return dict_best
 
-    def train_model(self, epochs, lr, l2_reg, l1_reg, lambda_reg):
+    def check_hyper_parameters_no_reg(self):
+        learn_rate = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
+        epochs = [10, 20, 30, 50, 100]
+
+        all_combinations = [[i, j] for i in learn_rate for j in epochs]
+        parms_no_reg = []
+        train_no_reg, valid_no_reg = [], []
+        for lr, epochs in all_combinations:
+            print(f"lr: {lr}, epochs: {epochs}")
+            mean_train, mean_valid = self.cross_validation(epochs, lr, False, False)
+            parms_no_reg.append([lr, epochs])
+            train_no_reg.append(mean_train)
+            valid_no_reg.append(mean_valid)
+
+        best_index_no_reg = valid_no_reg.index(max(valid_no_reg))
+        best_params_no_reg = parms_no_reg[best_index_no_reg]
+        print(f"best in: lr={best_params_no_reg[0]}, epochs={best_params_no_reg[1]}, \n "
+              f"train accuracy={train_no_reg[best_index_no_reg]}, valid accuracy={valid_no_reg[best_index_no_reg]}")
+
+    def train_model(self, epochs, lr, l1_reg, l2_reg, lambda_reg):
 
         # validation_split = .2
         # data_set_size = len(self.data_set_train)
@@ -261,13 +293,13 @@ class NeuralNetworkFB:
         train_data = self.data_set_train
         train_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
-        #this time train with the whole train set
+        # this time train with the whole train set
         validation_loader = \
             torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
         self.model = NeuralNet()
-        train_acc, valid_acc, epoch = self.run_epochs(train_loader, validation_loader, epochs, lr, l2_reg, l1_reg, lambda_reg)
+        train_acc, valid_acc, epoch = self.run_epochs(train_loader, validation_loader, epochs, lr, l1_reg, l2_reg,
+                                                      lambda_reg)
         print(f"train accuracy: {train_acc[-1]}")
-
 
     def predict_test(self, test_data_file):
 

@@ -75,7 +75,7 @@ def train_test_separate(data):
     num_of_rows = data[:, 0].size
 
     # here 80 percent of train
-    train_size = 0.8 * num_of_rows
+    train_size = 0.9 * num_of_rows
     train_size = int(train_size)
 
     data_train = data[0:train_size]

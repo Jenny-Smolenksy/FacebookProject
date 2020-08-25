@@ -28,7 +28,8 @@ class DecisionTreeFB:
         self.clf = None
 
     def create_tree(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
-        self.clf = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter, ccp_alpha=ccp_alpha)
+        self.clf = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter,
+                                          ccp_alpha=ccp_alpha)
 
     def cross_validation(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
 
@@ -66,7 +67,7 @@ class DecisionTreeFB:
               f" average validation accuracy: {valid_mean}")
         return train_mean, valid_mean
 
-    def draw_training_samples(samples, train_accuracy, validation_accuracy):
+    def draw_training_samples(samples, train_accuracy, validation_accuracy, file_index=0):
         """
         this function creates graph of train and validation accuracy per epoch
         :param num_of_epochs:
@@ -75,6 +76,7 @@ class DecisionTreeFB:
         :return: none
         """
         from matplotlib import pyplot as plt
+        plt.clf()
 
         plt.plot(samples, validation_accuracy, label="validation", color='blue', linewidth=2)
         plt.plot(samples, train_accuracy, label="train", color='green', linewidth=2)
@@ -82,15 +84,17 @@ class DecisionTreeFB:
         plt.xlabel('training samples')
         plt.ylabel('accuracy')
         plt.legend()
-        plt.show()
+        file_name = f"tree-accuracy{file_index}.png"
+        plt.savefig(file_name)
+        #plt.show()
 
-    def cross_validation_by_samples(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05):
+    def cross_validation_by_samples(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0):
 
         train_acc_cross, valid_acc_cross = [], []
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
         data_features = np.array(self.data_features)
         data_tags = np.array(self.data_tags)
-
+        cross_index = 1
         for train_index, valid_index in skf.split(data_features, data_tags):
             train_data = data_features[train_index]
             train_tags = data_tags[train_index]
@@ -99,7 +103,10 @@ class DecisionTreeFB:
             validation_tags = data_tags[valid_index]
 
             ######FOR SPLITTING DATA TO ERROR GRAPH####
-            clf_split = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter, ccp_alpha=ccp_alpha)
+            clf_split = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter,
+                                               ccp_alpha=ccp_alpha)
+            if ccp_alpha != 0:
+                clf_split.ccp_alpha = ccp_alpha
 
             train_split_acc, valid_split_acc, samples_train = [], [], []
 
@@ -124,13 +131,14 @@ class DecisionTreeFB:
                 valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
                 samples_train.append(len(train_split_tags))
 
-            DecisionTreeFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc)
+            DecisionTreeFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc, cross_index)
+            cross_index += 1
 
             train_acc_cross.append(train_split_acc[-1])
             valid_acc_cross.append(valid_split_acc[-1])
 
         print(f"max train accuracy: {round((max(train_acc_cross)).item(), 3)},"
-             f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
+              f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
         from statistics import mean
         train_mean = round((mean(train_acc_cross)).item(), 3)
         valid_mean = round((mean(valid_acc_cross)).item(), 3)
@@ -184,7 +192,11 @@ class DecisionTreeFB:
         y_pred = self.clf.predict(data_x_test)
         accuracy = metrics.accuracy_score(data_y_test, y_pred)
         accuracy = round(accuracy, 3)
-        print(f"accuracy on test set: {accuracy}")
+
+        y_pred_train = self.clf.predict(self.data_features)
+        accuracy_train = metrics.accuracy_score(self.data_tags, y_pred_train)
+        accuracy_train = round(accuracy_train, 3)
+        print(f"train accuracy: {accuracy_train} accuracy on test set: {accuracy}")
 
         return accuracy
 
@@ -200,4 +212,4 @@ class DecisionTreeFB:
                         special_characters=True, feature_names=self.feature_cols, class_names=['0', '1', '2', '3', '4'])
         graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
         graph.write_png('decision_tree.png')
-        #Image(graph.create_png())
+        # Image(graph.create_png())

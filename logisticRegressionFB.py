@@ -5,6 +5,7 @@ from sklearn.model_selection import StratifiedKFold
 import csv
 import numpy as np
 
+
 class LogisticRegressionFB:
 
     def __init__(self, data_file):
@@ -21,7 +22,7 @@ class LogisticRegressionFB:
         self.data_tags = pima.like  # Target variable
         self.model = None
 
-    def cross_validation(self, c_value = 100000000000000000 , solver='lbfgs', max_iter=100):
+    def cross_validation(self, c_value=100000000000000000, solver='lbfgs', max_iter=100):
         train_acc_cross, valid_acc_cross = [], []
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
         data_features = np.array(self.data_features)
@@ -35,7 +36,7 @@ class LogisticRegressionFB:
             validation_tags = data_tags[valid_index]
 
             logreg = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
-                                    multi_class='multinomial')
+                                        multi_class='multinomial')
 
             # Train Logistic regression Tree Classifer
             logreg = logreg.fit(train_data, train_tags)
@@ -70,10 +71,10 @@ class LogisticRegressionFB:
                             for k in solver
                             for z in max_iter]
 
-        for penalty, c_value, solver, max_iter in all_combinations:
+        for c_value, solver, max_iter in all_combinations:
             print(f"C: {c_value}, solver: {solver}, max_iter: {max_iter}")
-            mean_train, mean_valid = self.cross_validation(self, c_value, solver, max_iter)
-            parms.append([penalty, c_value, solver, max_iter])
+            mean_train, mean_valid = self.cross_validation(c_value, solver, max_iter)
+            parms.append([c_value, solver, max_iter])
             train.append(mean_train)
             valid.append(mean_valid)
 
@@ -88,14 +89,13 @@ class LogisticRegressionFB:
             "max_iter": best_params[2]}
         return dict_best
 
-    def train_logistic_regression(self, c_value = 100000000000000000 , solver='lbfgs', max_iter=100):
+    def train_logistic_regression(self, c_value=100000000000000000, solver='lbfgs', max_iter=100):
         print('training logistic regression model')
         self.model = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
-                                    multi_class='multinomial')
+                                        multi_class='multinomial')
         self.model = self.model.fit(self.data_features, self.data_tags)
 
-
-    def draw_training_samples(samples, train_accuracy, validation_accuracy):
+    def draw_training_samples(samples, train_accuracy, validation_accuracy, file_index=0):
         """
         this function creates graph of train and validation accuracy per epoch
         :param num_of_epochs:
@@ -104,14 +104,16 @@ class LogisticRegressionFB:
         :return: none
         """
         from matplotlib import pyplot as plt
-
+        plt.clf()
         plt.plot(samples, validation_accuracy, label="validation", color='blue', linewidth=2)
         plt.plot(samples, train_accuracy, label="train", color='green', linewidth=2)
         plt.title('Accuracy as function of training samples', fontweight='bold', fontsize=13)
         plt.xlabel('training samples')
         plt.ylabel('accuracy')
         plt.legend()
-        plt.show()
+        # plt.show()
+        file_name = f"logistic-accuracy{file_index}.png"
+        plt.savefig(file_name)
 
     def cross_validation_by_samples(self, c_value=100000000000000000, solver='lbfgs', max_iter=100):
 
@@ -119,7 +121,7 @@ class LogisticRegressionFB:
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
         data_features = np.array(self.data_features)
         data_tags = np.array(self.data_tags)
-
+        cross_index = 1
         for train_index, valid_index in skf.split(data_features, data_tags):
             train_data = data_features[train_index]
             train_tags = data_tags[train_index]
@@ -154,7 +156,8 @@ class LogisticRegressionFB:
                 valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
                 samples_train.append(len(train_split_tags))
 
-            LogisticRegressionFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc)
+            LogisticRegressionFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc, cross_index)
+            cross_index += 1
             train_acc_cross.append(train_split_acc[-1])
             valid_acc_cross.append(valid_split_acc[-1])
 
@@ -166,15 +169,18 @@ class LogisticRegressionFB:
         print(f"average train accuracy: {train_mean},"
               f" average validation accuracy: {valid_mean}")
 
-
     def predict_test(self, test_data_file):
         data_x_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=range(0, 12))
         data_y_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=12)
 
         y_pred = self.model.predict(data_x_test)
         accuracy = metrics.accuracy_score(data_y_test, y_pred)
-        accuracy = round(accuracy,3)
-        print(f"accuracy on test set: {accuracy}")
+        accuracy = round(accuracy, 3)
+
+        y_pred_train = self.model.predict(self.data_features)
+        accuracy_train = metrics.accuracy_score(self.data_tags, y_pred_train)
+        accuracy_train = round(accuracy_train, 3)
+        print(f"train accuracy: {accuracy_train} accuracy on test set: {accuracy}")
 
         return accuracy
 
@@ -182,6 +188,3 @@ class LogisticRegressionFB:
         sample = np.reshape(sample, (1, len(sample)))
         output = self.model.predict(sample)
         return output.item()
-
-
-

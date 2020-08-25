@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-import pandas
+import pandas as pd
 import matplotlib.lines as mlines
 
-excel_data_df = pandas.read_csv('data\processedDataAll.csv', delimiter=';')
+excel_data_df = pd.read_csv('data\processedDataAll.csv', delimiter=';')
 
 first_col = 'Page total likes'
 second_col = 'Lifetime Post Total Impressions'

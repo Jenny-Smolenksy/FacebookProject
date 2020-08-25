@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.lines as mlines
+from mpl_toolkits.mplot3d import Axes3D
 
 excel_data_df = pd.read_csv('data\processedDataAll.csv', delimiter=';')
 

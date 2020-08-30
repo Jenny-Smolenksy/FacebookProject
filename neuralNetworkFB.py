@@ -221,7 +221,7 @@ class NeuralNetworkFB:
         plt.xlabel('number of epoch')
         plt.ylabel('accuracy')
         plt.legend()
-        # plt.show()
+        plt.show()
         file_name = f"net-accuracy{file_index}.png"
         plt.savefig(file_name)
 
@@ -279,6 +279,37 @@ class NeuralNetworkFB:
         best_params_no_reg = parms_no_reg[best_index_no_reg]
         print(f"best in: lr={best_params_no_reg[0]}, epochs={best_params_no_reg[1]}, \n "
               f"train accuracy={train_no_reg[best_index_no_reg]}, valid accuracy={valid_no_reg[best_index_no_reg]}")
+
+    def train_model_and_check_validation(self, epochs, lr, l1_reg, l2_reg, lambda_reg, draw_accuracy=True):
+        train_acc_cross, valid_acc_cross = [], []
+
+        validation_split = .2
+        data_set_size = len(self.data_set_train)
+        indices = list(range(data_set_size))
+        split = int(np.floor(validation_split * data_set_size))
+        train_index, valid_index = indices[split:], indices[:split]
+        samples = self.data_set_train.specs
+        tags = self.data_set_train.classes
+
+        train_data = FBPostData(samples[train_index], tags[train_index])
+        train_loader = \
+            torch.utils.data.DataLoader(train_data, batch_size=32, shuffle=True)
+
+        validation_data = FBPostData(samples[valid_index], tags[valid_index])
+        validation_loader = \
+            torch.utils.data.DataLoader(validation_data, batch_size=32, shuffle=True)
+
+        self.model = NeuralNet()  # to start training from beginning
+        if torch.cuda.is_available():
+            self.model.cuda()
+
+        train_acc, valid_acc, epochs = \
+            self.run_epochs(train_loader, validation_loader, epochs, lr, l1_reg, l2_reg, lambda_reg)
+        train_acc_cross.append(max(train_acc))
+        valid_acc_cross.append(max(valid_acc))
+
+        if draw_accuracy:
+            NeuralNetworkFB.draw_graph_accuracy(epochs, train_acc, valid_acc)
 
     def train_model(self, epochs, lr, l1_reg, l2_reg, lambda_reg):
 

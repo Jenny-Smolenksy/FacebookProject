@@ -46,28 +46,39 @@ def main():
     decision_tree = DecisionTreeFB(train_file)
     logistic_regression = LogisticRegressionFB(train_file)
 
+    #neural_net.train_model_and_check_validation(30, 0.01, False, False, 0, draw_accuracy=True)
     #neural_net.cross_validation(30, 0.01, l1_regular=False, l2_regular=False,
-    #                             reg_labmda=0, draw_accuracy=True)  # without regularization
+    #                             reg_labmda=0, draw_accuracy=False)  # without regularization
 
+    #neural_net.train_model_and_check_validation(30, 0.01, l1_reg=True, l2_reg=False,
+    #                                            lambda_reg=0.005, draw_accuracy=True) # with l1 regularization
     #neural_net.cross_validation(30, 0.01, l1_regular=False, l2_regular=True,
-    #                             reg_labmda=0.005, draw_accuracy=True)  # with l1 regularization
+    #                             reg_labmda=0.005)  # with l1 regularization
 
+    #neural_net.train_model_and_check_validation(30, 0.01, l1_reg=False, l2_reg=True,
+    #                                            lambda_reg=0.001, draw_accuracy=True)  # with l2 regularization
     #neural_net.cross_validation(30, 0.01, l1_regular=False, l2_regular=True,
-    #                             reg_labmda=0.005, draw_accuracy=True)  # with l2 regularization
+    #                             reg_labmda=0.001)  # with l2 regularization
 
     #best_params_net = neural_net.check_hyper_parameters()
 
-    # decision_tree.cross_validation_by_samples(criterion="entropy", splitter="best",
-    #                                           max_depth=10, ccp_alpha=0)  # without regularization
-    # decision_tree.cross_validation_by_samples(criterion="entropy", splitter="best", max_depth=10,
-    #                                           ccp_alpha=0.05)  # with regularization
+    # decision_tree.train_by_samples(criterion="entropy", splitter="best",
+    #                                            max_depth=10, ccp_alpha=0)  # without regularization
+    #decision_tree.cross_validation(criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0)
+    # decision_tree.train_by_samples(criterion="entropy", splitter="best", max_depth=10,
+    #                                            ccp_alpha=0.05)  # with regularization
     #
+    #decision_tree.cross_validation(criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0.05)
     # best_params_tree = decision_tree.check_hyper_parameters()
 
-    # logistic_regression.cross_validation_by_samples(c_value=100000000000000000, solver='lbfgs',
-    #                                                 max_iter=1000)  # without regularization
-    # logistic_regression.cross_validation_by_samples(c_value=100, solver='lbfgs', max_iter=1000)  # with regularization
+    # logistic_regression.train_by_samples(c_value=100000000000000000, solver='lbfgs',
+    #                                                  max_iter=1000)  # without regularization
+    # logistic_regression.cross_validation(c_value=100000000000000000, solver='lbfgs',
+    #                                                  max_iter=1000)
     #
+    # logistic_regression.train_by_samples(c_value=100, solver='lbfgs', max_iter=1000)  # with regularization
+    #
+    # logistic_regression.cross_validation(c_value=100, solver='lbfgs', max_iter=1000)
     # best_params = logistic_regression.check_hyper_parameters()
 
     neural_net.train_model(epochs=50, lr=0.05, l1_reg=False, l2_reg=True, lambda_reg=0.1)

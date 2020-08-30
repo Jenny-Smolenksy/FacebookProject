@@ -95,7 +95,7 @@ class LogisticRegressionFB:
                                         multi_class='multinomial')
         self.model = self.model.fit(self.data_features, self.data_tags)
 
-    def draw_training_samples(samples, train_accuracy, validation_accuracy, file_index=0):
+    def draw_training_samples(samples, train_accuracy, validation_accuracy):
         """
         this function creates graph of train and validation accuracy per epoch
         :param num_of_epochs:
@@ -111,63 +111,55 @@ class LogisticRegressionFB:
         plt.xlabel('training samples')
         plt.ylabel('accuracy')
         plt.legend()
-        # plt.show()
-        file_name = f"logistic-accuracy{file_index}.png"
+        plt.show()
+        file_name = f"logistic-accuracy.png"
         plt.savefig(file_name)
 
-    def cross_validation_by_samples(self, c_value=100000000000000000, solver='lbfgs', max_iter=100):
+    def train_by_samples(self, c_value=100000000000000000, solver='lbfgs', max_iter=100):
 
-        train_acc_cross, valid_acc_cross = [], []
-        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        validation_split = .2
+        data_set_size = len(self.data_features)
+        indices = list(range(data_set_size))
+        split = int(np.floor(validation_split * data_set_size))
+        train_index, valid_index = indices[split:], indices[:split]
         data_features = np.array(self.data_features)
         data_tags = np.array(self.data_tags)
-        cross_index = 1
-        for train_index, valid_index in skf.split(data_features, data_tags):
-            train_data = data_features[train_index]
-            train_tags = data_tags[train_index]
 
-            validation_data = data_features[valid_index]
-            validation_tags = data_tags[valid_index]
+        train_data = data_features[train_index]
+        train_tags = data_tags[train_index]
 
-            ######FOR SPLITTING DATA TO ERROR GRAPH####
-            split_logreg = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
-                                              multi_class='multinomial')
+        validation_data = data_features[valid_index]
+        validation_tags = data_tags[valid_index]
 
-            train_split_acc, valid_split_acc, samples_train = [], [], []
+        ######FOR SPLITTING DATA TO ERROR GRAPH####
+        split_logreg = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
+                                          multi_class='multinomial')
 
-            d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
-            t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
+        train_split_acc, valid_split_acc, samples_train = [], [], []
 
-            d = [d1, d2, d3, d4, d5]
-            t = [t1, t2, t3, t4, t5]
+        d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
+        t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
 
-            for split_index in range(0, 5):
-                train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
-                train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
+        d = [d1, d2, d3, d4, d5]
+        t = [t1, t2, t3, t4, t5]
 
-                # Train Logistic regression Tree Classifer
-                split_logreg = split_logreg.fit(train_split_data, train_split_tags)
+        for split_index in range(0, 5):
+            train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
+            train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
 
-                # Predict the response for test dataset
-                valid_predictions = split_logreg.predict(validation_data)
-                train_part_predictions = split_logreg.predict(train_split_data)
+            # Train Logistic regression Tree Classifer
+            split_logreg = split_logreg.fit(train_split_data, train_split_tags)
 
-                train_split_acc.append(metrics.accuracy_score(train_split_tags, train_part_predictions))
-                valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
-                samples_train.append(len(train_split_tags))
+            # Predict the response for test dataset
+            valid_predictions = split_logreg.predict(validation_data)
+            train_part_predictions = split_logreg.predict(train_split_data)
 
-            LogisticRegressionFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc, cross_index)
-            cross_index += 1
-            train_acc_cross.append(train_split_acc[-1])
-            valid_acc_cross.append(valid_split_acc[-1])
+            train_split_acc.append(metrics.accuracy_score(train_split_tags, train_part_predictions))
+            valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
+            samples_train.append(len(train_split_tags))
 
-        print(f"max train accuracy: {round((max(train_acc_cross)).item(), 3)},"
-              f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
-        from statistics import mean
-        train_mean = round((mean(train_acc_cross)).item(), 3)
-        valid_mean = round((mean(valid_acc_cross)).item(), 3)
-        print(f"average train accuracy: {train_mean},"
-              f" average validation accuracy: {valid_mean}")
+        LogisticRegressionFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc)
+
 
     def predict_test(self, test_data_file):
         data_x_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=range(0, 12))

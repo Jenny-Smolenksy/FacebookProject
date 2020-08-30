@@ -67,7 +67,7 @@ class DecisionTreeFB:
               f" average validation accuracy: {valid_mean}")
         return train_mean, valid_mean
 
-    def draw_training_samples(samples, train_accuracy, validation_accuracy, file_index=0):
+    def draw_training_samples(samples, train_accuracy, validation_accuracy):
         """
         this function creates graph of train and validation accuracy per epoch
         :param num_of_epochs:
@@ -84,66 +84,56 @@ class DecisionTreeFB:
         plt.xlabel('training samples')
         plt.ylabel('accuracy')
         plt.legend()
-        file_name = f"tree-accuracy{file_index}.png"
+        file_name = f"tree-accuracy.png"
         plt.savefig(file_name)
-        #plt.show()
+        plt.show()
 
-    def cross_validation_by_samples(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0):
+    def train_by_samples(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0):
 
-        train_acc_cross, valid_acc_cross = [], []
-        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        validation_split = .2
+        data_set_size = len(self.data_features)
+        indices = list(range(data_set_size))
+        split = int(np.floor(validation_split * data_set_size))
+        train_index, valid_index = indices[split:], indices[:split]
         data_features = np.array(self.data_features)
         data_tags = np.array(self.data_tags)
-        cross_index = 1
-        for train_index, valid_index in skf.split(data_features, data_tags):
-            train_data = data_features[train_index]
-            train_tags = data_tags[train_index]
 
-            validation_data = data_features[valid_index]
-            validation_tags = data_tags[valid_index]
+        train_data = data_features[train_index]
+        train_tags = data_tags[train_index]
 
-            ######FOR SPLITTING DATA TO ERROR GRAPH####
-            clf_split = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter,
-                                               ccp_alpha=ccp_alpha)
-            if ccp_alpha != 0:
-                clf_split.ccp_alpha = ccp_alpha
+        validation_data = data_features[valid_index]
+        validation_tags = data_tags[valid_index]
 
-            train_split_acc, valid_split_acc, samples_train = [], [], []
+        ######FOR SPLITTING DATA TO ERROR GRAPH####
+        clf_split = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter,
+                                           ccp_alpha=ccp_alpha)
+        if ccp_alpha != 0:
+            clf_split.ccp_alpha = ccp_alpha
 
-            d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
-            t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
+        train_split_acc, valid_split_acc, samples_train = [], [], []
 
-            d = [d1, d2, d3, d4, d5]
-            t = [t1, t2, t3, t4, t5]
+        d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
+        t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
 
-            for split_index in range(0, 5):
-                train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
-                train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
+        d = [d1, d2, d3, d4, d5]
+        t = [t1, t2, t3, t4, t5]
 
-                # Train Logistic regression Tree Classifer
-                clf_split = clf_split.fit(train_split_data, train_split_tags)
+        for split_index in range(0, 5):
+            train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
+            train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
 
-                # Predict the response for test dataset
-                valid_predictions = clf_split.predict(validation_data)
-                train_part_predictions = clf_split.predict(train_split_data)
+            # Train Logistic regression Tree Classifer
+            clf_split = clf_split.fit(train_split_data, train_split_tags)
 
-                train_split_acc.append(metrics.accuracy_score(train_split_tags, train_part_predictions))
-                valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
-                samples_train.append(len(train_split_tags))
+            # Predict the response for test dataset
+            valid_predictions = clf_split.predict(validation_data)
+            train_part_predictions = clf_split.predict(train_split_data)
 
-            DecisionTreeFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc, cross_index)
-            cross_index += 1
+            train_split_acc.append(metrics.accuracy_score(train_split_tags, train_part_predictions))
+            valid_split_acc.append(metrics.accuracy_score(validation_tags, valid_predictions))
+            samples_train.append(len(train_split_tags))
 
-            train_acc_cross.append(train_split_acc[-1])
-            valid_acc_cross.append(valid_split_acc[-1])
-
-        print(f"max train accuracy: {round((max(train_acc_cross)).item(), 3)},"
-              f" max validation accuracy: {round((max(valid_acc_cross)).item(), 3)}")
-        from statistics import mean
-        train_mean = round((mean(train_acc_cross)).item(), 3)
-        valid_mean = round((mean(valid_acc_cross)).item(), 3)
-        print(f"average train accuracy: {train_mean},"
-              f" average validation accuracy: {valid_mean}")
+        DecisionTreeFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc)
 
     def check_hyper_parameters(self):
 

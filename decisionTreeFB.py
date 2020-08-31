@@ -90,7 +90,7 @@ class DecisionTreeFB:
 
     def train_by_samples(self, criterion="entropy", splitter="best", max_depth=10, ccp_alpha=0):
 
-        validation_split = .2
+        validation_split = .1
         data_set_size = len(self.data_features)
         indices = list(range(data_set_size))
         split = int(np.floor(validation_split * data_set_size))
@@ -112,16 +112,18 @@ class DecisionTreeFB:
 
         train_split_acc, valid_split_acc, samples_train = [], [], []
 
-        d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
-        t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
+        d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15 = np.array_split(train_data, 15)
+        t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 = np.array_split(train_tags, 15)
 
-        d = [d1, d2, d3, d4, d5]
-        t = [t1, t2, t3, t4, t5]
+        d = [d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15]
+        t = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15]
 
-        for split_index in range(0, 5):
+        for split_index in range(0, 15):
             train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
             train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
 
+            clf_split = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, splitter=splitter,
+                                               ccp_alpha=ccp_alpha)
             # Train Logistic regression Tree Classifer
             clf_split = clf_split.fit(train_split_data, train_split_tags)
 

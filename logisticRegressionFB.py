@@ -137,15 +137,19 @@ class LogisticRegressionFB:
 
         train_split_acc, valid_split_acc, samples_train = [], [], []
 
-        d1, d2, d3, d4, d5 = np.array_split(train_data, 5)
-        t1, t2, t3, t4, t5 = np.array_split(train_tags, 5)
+        d1, d2, d3, d4, d5, d6, d7, d8, d9, d10 = np.array_split(train_data, 10)
+        t1, t2, t3, t4, t5, t6, t7, t8, t9, t10 = np.array_split(train_tags, 10)
 
-        d = [d1, d2, d3, d4, d5]
-        t = [t1, t2, t3, t4, t5]
+        d = [d1, d2, d3, d4, d5, d6, d7, d8, d9, d10]
+        t = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10]
 
-        for split_index in range(0, 5):
+
+        for split_index in range(0, 10):
             train_split_data = np.concatenate((d[0:(split_index + 1)]), axis=0)
             train_split_tags = np.concatenate((t[0:(split_index + 1)]), axis=0)
+
+            split_logreg = LogisticRegression(penalty='l2', C=c_value, solver=solver, max_iter=max_iter,
+                                              multi_class='multinomial')
 
             # Train Logistic regression Tree Classifer
             split_logreg = split_logreg.fit(train_split_data, train_split_tags)
@@ -159,7 +163,6 @@ class LogisticRegressionFB:
             samples_train.append(len(train_split_tags))
 
         LogisticRegressionFB.draw_training_samples(samples_train, train_split_acc, valid_split_acc)
-
 
     def predict_test(self, test_data_file):
         data_x_test = np.loadtxt(test_data_file, skiprows=1, delimiter=';', usecols=range(0, 12))
